@@ -1,0 +1,4 @@
+billingType,description,requiresCostCenter,requiresFixedAsset
+Cost Center,Cost Center Billing,X,
+Financial,Financial Billing,,
+Fixed Asset,Fixed Asset Billing,,X

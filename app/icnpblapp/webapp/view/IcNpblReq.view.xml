@@ -1,0 +1,207 @@
+<mvc:View controllerName="com.ui5.lly.icnpbl.icnpblapp.controller.IcNpblReq"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:l="sap.ui.layout"
+    xmlns:core="sap.ui.core"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:u="sap.ui.unified">
+    <Page id="page" title="{i18n>title}">
+        <customHeader>
+            <Toolbar >
+                <Title text="{i18n>title}"></Title>
+                <ToolbarSpacer ></ToolbarSpacer>
+                <Label text="Dark Mode"></Label>
+                <Switch state="false" change="onThemeSwitch"></Switch>
+            </Toolbar>
+        </customHeader>
+        <content>
+            <Panel headerText="BILLING INFORMATION" class="sapUiSmallMargin" width="auto" expandable="true" expanded="true">
+                <f:SimpleForm editable="true" layout="ColumnLayout" columnsM="3" columnsL="3" columnsXL="3">
+                    <Label text="Billing Type" required="true" />
+                    <ComboBox id="oSelBillingType" change="onSelBillingType" placeholder="— Select billing type —">
+                        <items>
+                            <core:Item text="Financial billing request" key="Financial"/>
+                            <core:Item text="Cost center billing request" key="Cost Center"/>
+                            <core:Item text="Fixed asset billing request" key="Fixed Asset"/>
+                        </items>
+                    </ComboBox>
+                    <Label text="Billing Option" required="true" />
+                    <ComboBox placeholder="— Select billing option —">
+                        <items>
+                            <core:Item text="Single event" />
+                            <core:Item text="Multiple events" />
+                        </items>
+                    </ComboBox>
+                    <Label text="Billing Sub-Type" required="true" />
+                    <ComboBox items="{viewModel>/value}" selectionChange="onSelBillingSubType" placeholder="— Select billing sub-type —">
+                        <items>
+                            <core:Item  key="{viewModel>billingSubType}" text="{viewModel>billingSubType}" />
+                        </items>
+                    </ComboBox>
+                    <Label text="Billing Description" />
+                    <TextArea value="{billing>/Description}" rows="4" placeholder="Service period, basis of charge, PO/SO references..." />
+                    <Label ></Label>
+                    <Text ></Text>
+                    <Label text="Billing Timing" required="true"></Label>
+                    <RadioButtonGroup columns="2" selectedIndex="-1" select="onSelBilTiming">
+                        <buttons>
+                            <RadioButton text="Bill Immedietly"></RadioButton>
+                            <RadioButton text="Bill at a later date"></RadioButton>
+                        </buttons>
+                    </RadioButtonGroup>
+                    <Label text="Scheduled billing date(On or before EOM–5)" required="true"></Label>
+                    <DatePicker id="oDPBillingDate" visible="false"></DatePicker>
+
+
+                </f:SimpleForm>
+            </Panel>
+            <Panel headerText="BILLING &amp; RECEIVING AFFILIATE INFORMATION" class="sapUiSmallMargin" width="auto" expandable="true" expanded="true">
+                <FlexBox justifyContent="SpaceBetween">
+                    <l:Grid defaultSpan="L6 M6 S12" vSpacing="0">
+                        <Toolbar >
+                            <core:Icon src="sap-icon://receipt"></core:Icon>
+                            <Title text="BILLING AFFILIATE"></Title>
+                            <layoutData>
+                                <l:GridData spanL="12"></l:GridData>
+                            </layoutData>
+                        </Toolbar>
+                        <VBox class="sapUiSmallMarginTop">
+                            <Label text="Cost Center" required="true"></Label>
+                            <Input ></Input>
+                        </VBox>
+                        <VBox class="sapUiSmallMarginTop">
+                            <Label text="Cost Element" required="true"></Label>
+                            <Input id="oIpBillCE"></Input>
+                        </VBox>
+
+                        <VBox class="sapUiTinyMarginTop">
+                            <Label text="Company code" required="true"></Label>
+                            <Input ></Input>
+                        </VBox>
+                        <VBox class="sapUiTinyMarginTop">
+                            <Label text="Country Code"></Label>
+                            <Input enabled="false"></Input>
+                        </VBox>
+                        <VBox class="sapUiTinyMarginTop">
+                            <Label text="Billing Contact" required="true"></Label>
+                            <Input ></Input>
+                        </VBox>
+                    </l:Grid>
+
+                    <l:Grid defaultSpan="L6 M6 S12" vSpacing="0">
+                        <Toolbar >
+                            <core:Icon src="sap-icon://paper-plane"></core:Icon>
+                            <Title text="RECEIVING AFFILIATE"></Title>
+                            <layoutData>
+                                <l:GridData spanL="12"></l:GridData>
+                            </layoutData>
+                        </Toolbar>
+                        <VBox class="sapUiSmallMarginTop">
+                            <Label text="Cost Center" required="true"></Label>
+                            <Input ></Input>
+                        </VBox>
+                        <VBox class="sapUiSmallMarginTop">
+                            <Label text="Cost Element" required="true"></Label>
+                            <Input id="oIpRecCE"></Input>
+                        </VBox>
+
+                        <VBox class="sapUiTinyMarginTop">
+                            <Label text="Company code" required="true"></Label>
+                            <Input ></Input>
+                        </VBox>
+                        <VBox class="sapUiTinyMarginTop">
+                            <Label text="Country Code"></Label>
+                            <Input ></Input>
+                        </VBox>
+                        <VBox class="sapUiTinyMarginTop">
+                            <Label text="Receiving contact" required="true"></Label>
+                            <Input ></Input>
+                        </VBox>
+                    </l:Grid>
+
+                </FlexBox>
+
+                <!-- <f:SimpleForm title="Actual Value in Local Currency" editable="true" layout="ColumnLayout" labelSpanL="12" columnsL="3" columnsXL="3" columnsM="3"> -->
+                <Toolbar class="sapUiSmallMarginTopBottom">
+                <core:Icon src="sap-icon://batch-payments"></core:Icon>
+                    <Title text="Actual Value in Local Currency"></Title>
+                </Toolbar>
+                <l:Grid defaultSpan="XL3 L3 M3 S12" vSpacing="0">
+
+                    <VBox >
+                        <Label text="Currency"></Label>
+                        <Input ></Input>
+                    </VBox>
+                    <VBox >
+                        <Label text="Actual Amount To Be Billed"></Label>
+                        <Input ></Input>
+                    </VBox>
+                    <VBox >
+                        <Label text="MarkUp%"></Label>
+                        <StepInput value="0" min="0"></StepInput>
+                    </VBox>
+                    <VBox >
+                        <Label text="MarkUp Amount"></Label>
+                        <Input ></Input>
+                    </VBox>
+                    <VBox class="sapUiTinyMarginTop">
+                        <Label text="Total Actual Amount To Be Billed"></Label>
+                        <Input ></Input>
+                    </VBox>
+
+                </l:Grid>
+
+                <FlexBox justifyContent="SpaceBetween" class="sapUiSmallMarginTop">
+                    <VBox >
+                        <Toolbar >
+                          <core:Icon src="sap-icon://batch-payments"></core:Icon>
+                            <Title text="Actual Value in Customer Currency"></Title>
+                        </Toolbar>
+                        <HBox class="sapUiSmallMarginTop">
+                            <VBox >
+                                <Label text="Currency"></Label>
+                                <Input ></Input>
+                            </VBox>
+                            <VBox class="sapUiLargeMarginBegin">
+                                <Label text="Total Actual Amount To Be Billed"></Label>
+                                <Input ></Input>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                    <VBox >
+                        <Toolbar >
+                          <core:Icon src="sap-icon://lead"></core:Icon>
+                            <Title text="Actual Value in USD"></Title>
+                        </Toolbar>
+                        <HBox class="sapUiSmallMarginTop">
+                            <VBox >
+                                <Label text="Currency"></Label>
+                                <Input ></Input>
+                            </VBox>
+                            <VBox class="sapUiLargeMarginBegin">
+                                <Label text="Total Actual Amount To Be Billed"></Label>
+                                <Input ></Input>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                </FlexBox>
+            </Panel>
+           
+            <Panel headerText="SUPPORTING EVIDENCE" class="sapUiSmallMargin" width="auto" expandable="true" expanded="true">
+                <u:FileUploader ></u:FileUploader>
+            </Panel>
+            <Panel headerText="Comments &amp; History" class="sapUiSmallMargin" width="auto" expandable="true" expanded="true">
+              <CheckBox text="Please check this box if there are special accounting instructions that need to be followed by the exceptions handling team "></CheckBox>
+              <TextArea rows="4" width="100%"></TextArea>
+            </Panel>
+        </content>
+        <footer>
+            <Bar >
+                <contentRight>
+                    <Button text="Save" icon="sap-icon://save" type="Emphasized"></Button>
+                    <Button text="Submit For Approval" icon="sap-icon://accept" type="Emphasized"></Button>
+                </contentRight>
+            </Bar>
+        </footer>
+    </Page>
+</mvc:View>

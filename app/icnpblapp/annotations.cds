@@ -1,0 +1,1 @@
+using IcNpblService as service from '../../srv/icnpbl-srv';
