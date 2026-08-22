@@ -1,0 +1,163 @@
+_schema-version: 3.3.0
+ID: GSIT_ICNPBL
+description: A simple CAP project.
+version: 1.0.0
+modules:
+- name: GSIT_ICNPBL-srv
+  type: nodejs
+  path: gen/srv
+  requires:
+  - name: GSIT_ICNPBL-auth
+  - name: GSIT_ICNPBL-db
+  - name: GSIT_ICNPBL-destination
+  - name: GSIT_ICNPBL-connectivity
+  provides:
+  - name: srv-api
+    properties:
+      srv-url: ${default-url}
+  parameters:
+    buildpack: nodejs_buildpack
+    instances: 1
+  build-parameters:
+    builder: npm-ci
+- name: GSIT_ICNPBL-db-deployer
+  type: hdb
+  path: gen/db
+  requires:
+  - name: GSIT_ICNPBL-db
+  parameters:
+    buildpack: nodejs_buildpack
+- name: GSIT_ICNPBL-app-deployer
+  type: com.sap.application.content
+  path: gen
+  requires:
+  - name: GSIT_ICNPBL-auth
+  - name: srv-api
+  - name: GSIT_ICNPBL-html5-repo-host
+    parameters:
+      config:
+        HTML5Runtime_enabled: true
+      content-target: true
+  parameters:
+    config:
+      destinations:
+      - Authentication: NoAuthentication
+        HTML5.DynamicDestination: true
+        HTML5.ForwardAuthToken: true
+        Name: srv-api
+        ProxyType: Internet
+        Type: HTTP
+        URL: ~{srv-api/srv-url}
+  build-parameters:
+    build-result: app/
+    requires:
+    - artifacts:
+      - comui5llyicnpblicnpblapp.zip
+      name: GSIT_ICNPBLicnpblapp
+      target-path: app/
+    
+- name: GSIT_ICNPBLicnpblapp
+  type: html5
+  path: app/icnpblapp
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+- name: GSIT_ICNPBL-destinations
+  type: com.sap.application.content
+  requires:
+  - name: GSIT_ICNPBL-auth
+    parameters:
+      service-key:
+        name: GSIT_ICNPBL-auth-key
+  - name: GSIT_ICNPBL-html5-repo-host
+    parameters:
+      service-key:
+        name: GSIT_ICNPBL-html5-repo-host-key
+  - name: srv-api
+  - name: GSIT_ICNPBL-destination
+    parameters:
+      content-target: true
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: GSIT_ICNPBL-html5-repository
+          ServiceInstanceName: GSIT_ICNPBL-html5-repo-host
+          ServiceKeyName: GSIT_ICNPBL-html5-repo-host-key
+          sap.cloud.service: GSIT_ICNPBL.service
+        - Authentication: OAuth2UserTokenExchange
+          Name: GSIT_ICNPBL-auth
+          ServiceInstanceName: GSIT_ICNPBL-auth
+          ServiceKeyName: GSIT_ICNPBL-auth-key
+          sap.cloud.service: GSIT_ICNPBL.service
+        existing_destinations_policy: update
+  build-parameters:
+    no-source: true
+
+resources:
+- name: GSIT_ICNPBL-auth
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      oauth2-configuration:
+        credential-types:
+        - binding-secret
+        - x509
+      tenant-mode: dedicated
+      xsappname: GSIT_ICNPBL-${org}-${space}
+    path: ./xs-security.json
+    service: xsuaa
+    service-plan: application
+- name: GSIT_ICNPBL-db
+  type: com.sap.xs.hdi-container
+  parameters:
+    service: hana
+    service-plan: hdi-shared
+- name: GSIT_ICNPBL-connectivity
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: connectivity
+    service-plan: lite    
+- name: GSIT_ICNPBL-destination
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            HTML5.DynamicDestination: true
+            HTML5.ForwardAuthToken: true
+            Name: srv-api
+            ProxyType: Internet
+            Type: HTTP
+            URL: ~{srv-api/srv-url}
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          existing_destinations_policy: update
+    service: destination
+    service-plan: lite
+  requires:
+  - name: srv-api
+- name: GSIT_ICNPBL-html5-repo-host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-plan: app-host
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+  - builder: custom
+    commands:
+    - npm ci
+    - npx cds build --production

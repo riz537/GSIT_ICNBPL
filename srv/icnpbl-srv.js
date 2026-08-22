@@ -1,9 +1,16 @@
 const cds = require('@sap/cds')
 
 module.exports = class IcNpblService extends cds.ApplicationService {
-  init() {
+  async init() {
 
-    const { ICNPBRequest, Users, BillingTypes, BillingSubTypeDerivation, AffiliateMaster, MarkupDerivation } = cds.entities('IcNpblService')
+    const {CostCenter, ICNPBRequest, Users, BillingTypes, BillingSubTypeDerivation, AffiliateMaster, MarkupDerivation } = cds.entities('IcNpblService')
+
+    const mdSrv = await cds.connect.to('masterdata_edmx');
+
+    this.on('READ', CostCenter, async req => {
+      console.log("Inside READ of Cost Center");
+      return mdSrv.run(req.query);
+    });
 
     this.on('getBillingSubTypes', async (req) => {
       console.log("I am inside the getBillingSubTypes");
@@ -22,6 +29,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       return result;
 
     });
+
 
     return super.init()
   }

@@ -1,5 +1,5 @@
 ID,billingType,billingSubType,sapMaterial,description,ceSelection,costElement,allowedCostElements,threshold,passThroughControlled,inScope
-0dd6d7f4-1d6c-4631-a5d2-cf5652deebf83,Cost Center,Meetings/Symposia,GLOBAL MEETING,GLOBAL MEETING,FIXED,6020,,15000,No,Yes
+0dd6d7f4-1d6c-4631-a5d2-cf5652deebf8,Cost Center,Meetings/Symposia,GLOBAL MEETING,GLOBAL MEETING,FIXED,6020,,15000,No,Yes
 e0ef5d3a-66a1-4d95-a954-b4c9b1286ecf,Cost Center,HCP Payments,HCP,PAYMENT TO HEALTH CARE PROFESSIONAL,FIXED,6100,,5000,No,Yes
 7331ebbb-f730-4367-b5c6-5c28c95b2e17,Cost Center,Hosted Expenses,HOSTED,HOSTED EMPLOYEES OR FUNCTIONS,FIXED,7751,,0,Yes,Yes
 6e0ae0d2-bf81-4586-b6f1-489d7ca8e0b2,Cost Center,ISE,ISE,1INTERNATIONAL SERVICE EMPLOYEE,FIXED,7750,,0,No,Yes
