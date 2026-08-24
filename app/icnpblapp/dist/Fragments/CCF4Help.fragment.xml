@@ -1,0 +1,29 @@
+<core:FragmentDefinition xmlns:core="sap.ui.core"
+    xmlns="sap.m">
+    <Dialog title="Select Cost Center" contentWidth="70%">
+        <Table items="{/CostCenter}" >
+            <columns>
+                <Column >
+                    <Text text="Cost Center"></Text>
+                </Column>
+                <Column >
+                    <Text text="Cost Center Name"></Text>
+                </Column>
+                <Column >
+                    <Text text="Company Code"></Text>
+                </Column>
+            </columns>
+            <items>
+                <ColumnListItem press="onPressCCItem" type="Active">
+                    <Text text="{CostCenter}"></Text>
+                    <Text text="{CostCenterName}"></Text>
+                    <Text text="{CompanyCode}"></Text>
+                </ColumnListItem>
+            </items>
+        </Table>
+        <endButton>
+            <Button text="Close" type="Reject" press="onCloseCCDialog"></Button>
+        </endButton>
+    </Dialog>
+
+</core:FragmentDefinition>

@@ -1,13 +1,21 @@
 sap.ui.define([
     "sap/ui/core/mvc/Controller",
-     "sap/ui/model/json/JSONModel"
-], (Controller,JSONModel) => {
+    "sap/ui/model/json/JSONModel",
+    "sap/m/MessageBox"
+], (Controller, JSONModel, MessageBox) => {
     "use strict";
 
     return Controller.extend("com.ui5.lly.icnpbl.icnpblapp.controller.IcNpblReq", {
         onInit() {
+            this.billingTypes = {
+                "FINANCIAL": "Financial",
+                "COST_CENTER": "Cost Center",
+                "FIXED_ASSET": "Fixed Asset"
+            };
             this.viewModel = new JSONModel();
             this.getView().setModel(this.viewModel, "viewModel");
+            this.requestModel = new JSONModel();
+            this.getView().setModel(this.requestModel, "requestModel");
         },
         onSelBilTiming: function (oEvent) {
             var bilTiming = oEvent.getParameter("selectedIndex");
@@ -28,7 +36,7 @@ sap.ui.define([
         },
         async onSelBillingType(oEvent) {
             try {
-                const sBillingType = oEvent.getSource().getSelectedKey();
+                const sBillingType = this.billingTypes[oEvent.getSource().getSelectedKey()];
                 const oModel = this.getView().getModel();
                 const oFunction = oModel.bindContext("/getBillingSubTypes(...)");
                 oFunction.setParameter("billingType", sBillingType);
@@ -39,14 +47,224 @@ sap.ui.define([
             } catch (err) {
                 console.error(err);
             }
-
         },
         onSelBillingSubType: function (oEvent) {
             var oSelItem = oEvent.getSource().getSelectedItem();
             var costElement = oSelItem.getBindingContext("viewModel").getObject().costElement;
             this.byId("oIpBillCE").setValue(costElement);
             this.byId("oIpRecCE").setValue(costElement);
+        },
+        onPressCCF4Help: function (oEvent) {
+            this.Input = oEvent.getSource();
+            if (!this.ccDialog) {
+                this.ccDialog = sap.ui.xmlfragment(this.getView().getId(), "com.ui5.lly.icnpbl.icnpblapp.Fragments.CCF4Help", this);
+                this.getView().addDependent(this.ccDialog);
+            }
+            this.ccDialog.open();
+        },
+        onCloseCCDialog: function () {
+            this.ccDialog.close();
+        },
+        onPressCCItem: async function (oEvent) {
+            var object = oEvent.getSource().getBindingContext().getObject();
+            this.Input.setValue(object.CostCenter);
+            if (this.Input.getId().includes("CostCenter2")) {
+                this.byId("oIpCompCode2").setValue(object.CompanyCode);
+            } else {
+                this.byId("oIpCompCode").setValue(object.CompanyCode);
+            }
+            var countryCode = await this.getCountryCode(object.CompanyCode);
+            if (this.Input.getId().includes("CostCenter2")) {
+                this.byId("oIpCountryCode2").setValue(countryCode);
+                this.byId("oIpCustomerCurrency").setValue(countryCode);
+            } else {
+                this.byId("oIpCountryCode").setValue(countryCode);
+                this.byId("oIpLocalCurrency").setValue(countryCode);
+            }
+            this.ccDialog.close();
+        },
+        onChangeMarkup: function () {
+            var markup = this.byId("oSIMarkup").getValue();
+            var actualAmount = this.byId("oIpActualAmount").getValue();
+            var markupAmount = actualAmount * (markup / 100);
+            var totalActualAmount = parseFloat(actualAmount) + parseFloat(markupAmount);
+            this.byId("oIpMarkupAmount").setValue(markupAmount);
+            this.byId("oIpTotalActualAmount").setValue(totalActualAmount);
 
+        },
+        async getCountryCode(CompanyCode) {
+            try {
+                const oModel = this.getView().getModel();
+                const oFunction = oModel.bindContext("/getCountryCode(...)");
+                oFunction.setParameter("companyCode", CompanyCode);
+                await oFunction.execute();
+                const oData = oFunction.getBoundContext().getObject();
+                return oData.countryCode;
+                console.log(oData);
+            } catch (err) {
+                console.error(err);
+            }
+        },
+        onPressContactF4: function (oEvent) {
+            this.contactInput = oEvent.getSource();
+            if (!this.contactDialog) {
+                this.contactDialog = sap.ui.xmlfragment(this.getView().getId(), "com.ui5.lly.icnpbl.icnpblapp.Fragments.ContactF4", this);
+                this.getView().addDependent(this.contactDialog);
+            }
+            this.contactDialog.open();
+            if (this.contactInput.getId().includes("2")) {
+                this.contactDialog.setTitle("Select Receiving Contact");
+            } else {
+                this.contactDialog.setTitle("Billing Contact");
+            }
+            this.bindContactTable(this.contactInput.getId());
+        },
+        onCloseContactF4: function () {
+            this.contactDialog.close();
+        },
+        bindContactTable: function (contactInputID) {
+            var oContactTable = this.byId("oContactTable");
+            oContactTable.removeAllColumns();
+            oContactTable.unbindItems();
+            if (contactInputID.includes("oIpRecContact")) {
+                oContactTable.addColumn(
+                    new sap.m.Column({
+                        header: new sap.m.Text({
+                            text: "Customer"
+                        })
+                    })
+                );
+                oContactTable.addColumn(
+                    new sap.m.Column({
+                        header: new sap.m.Text({
+                            text: "Customer Name"
+                        })
+                    })
+                );
+                // Template
+                var oCustTemplate = new sap.m.ColumnListItem({
+                    type: "Active",
+                    press: this.onPressContactItem.bind(this),
+                    cells: [
+                        new sap.m.Text({
+                            text: "{Customer}"
+                        }),
+                        new sap.m.Text({
+                            text: "{CustomerName}"
+                        })
+                    ]
+                });
+                // Binding
+                oContactTable.bindItems({
+                    path: "/ICCustomer",
+                    template: oCustTemplate
+                });
+            } else {
+                oContactTable.addColumn(
+                    new sap.m.Column({
+                        header: new sap.m.Text({
+                            text: "Supplier"
+                        })
+                    })
+                );
+                oContactTable.addColumn(
+                    new sap.m.Column({
+                        header: new sap.m.Text({
+                            text: "Supplier Name"
+                        })
+                    })
+                );
+                // Template
+                var oVendTemplate = new sap.m.ColumnListItem({
+                    type: "Active",
+                    press: this.onPressContactItem.bind(this),
+                    cells: [
+                        new sap.m.Text({
+                            text: "{Supplier}"
+                        }),
+                        new sap.m.Text({
+                            text: "{SupplierName}"
+                        })
+                    ]
+                });
+                // Binding
+                oContactTable.bindItems({
+                    path: "/ICVendor",
+                    template: oVendTemplate
+                });
+            }
+        },
+        onPressContactItem: function (oEvent) {
+            if (this.contactInput.getId().includes("oIpRecContact")) {
+                this.contactInput.setValue(oEvent.getSource().getBindingContext().getObject().CustomerName);
+            } else {
+                this.contactInput.setValue(oEvent.getSource().getBindingContext().getObject().SupplierName);
+            }
+            this.contactDialog.close();
+        },
+        onFileSelect: function (oEvent) {
+            this._selectedFile = oEvent.getParameter("files")[0];
+        },
+        _readFileAsBase64: function (file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const base64 =
+                        e.target.result.split(",")[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        },
+        uploadAttachment: async function (requestId) {
+            if (!this._selectedFile) {
+                return;
+            }
+            const file = this._selectedFile;
+            const base64Content = await this._readFileAsBase64(file);
+            const payload = {
+                request_ID: requestId,
+                fileName: file.name,
+                mimeType: file.type,
+                fileContent: base64Content,
+                uploadedAt: new Date().toISOString()
+            };
+            const oModel = this.getView().getModel();
+            try {
+                const oBinding = oModel.bindList("/ICNPBAttachment");
+                const oContext = oBinding.create(payload);
+                await oContext.created();
+            }catch (oError) {
+                console.error(oError);
+                sap.m.MessageBox.error("Upload Failed");
+            }
+           
+        },
+        onPressSave: async function () {
+            var payload = this.getView().getModel("requestModel").getData();
+            var oModel = this.getView().getModel();
+            if (this.byId("oRBGBillTiming").getSelectedIndex() === 0) {
+                payload.billAtDate = new Date().toISOString().split("T")[0];
+                payload.billingTiming = "IMMEDIATE";
+            } else {
+                payload.billAtDate = this.byId("oDPBillingDate").getDateValue()?.toISOString().split("T")[0];
+                payload.billingTiming = "LATER";
+            }
+            try {
+                const oListBinding = oModel.bindList("/ICNPBRequest");
+                const oContext = oListBinding.create(payload);
+                await oContext.created();
+                const requestId = oContext.getProperty("ID");
+                this._requestId = requestId;
+                await this.uploadAttachment(requestId);
+                sap.m.MessageBox.success("Request Saved Successfully");
+            } catch (oError) {
+                console.error(oError);
+                sap.m.MessageBox.error("Save Failed");
+            }
         }
+
+
     });
 });

@@ -18,32 +18,32 @@
             <Panel headerText="BILLING INFORMATION" class="sapUiSmallMargin" width="auto" expandable="true" expanded="true">
                 <f:SimpleForm editable="true" layout="ColumnLayout" columnsM="3" columnsL="3" columnsXL="3">
                     <Label text="Billing Type" required="true" />
-                    <ComboBox id="oSelBillingType" change="onSelBillingType" placeholder="— Select billing type —">
+                    <ComboBox id="oSelBillingType" change="onSelBillingType" placeholder="— Select billing type —" selectedKey="{requestModel>/billingType}">
                         <items>
-                            <core:Item text="Financial billing request" key="Financial"/>
-                            <core:Item text="Cost center billing request" key="Cost Center"/>
-                            <core:Item text="Fixed asset billing request" key="Fixed Asset"/>
+                            <core:Item text="Financial billing request" key="FINANCIAL"/>
+                            <core:Item text="Cost center billing request" key="COST_CENTER"/>
+                            <core:Item text="Fixed asset billing request" key="FIXED_ASSET"/>
                         </items>
                     </ComboBox>
                     <Label text="Billing Option" required="true" />
-                    <ComboBox placeholder="— Select billing option —">
+                    <ComboBox placeholder="— Select billing option —" selectedKey="{requestModel>/billingOption}">
                         <items>
-                            <core:Item text="Single event" />
-                            <core:Item text="Multiple events" />
+                            <core:Item text="Single event" key="SINGLE"/>
+                            <core:Item text="Multiple events" key="RECURRING"/>
                         </items>
                     </ComboBox>
                     <Label text="Billing Sub-Type" required="true" />
-                    <ComboBox items="{viewModel>/value}" selectionChange="onSelBillingSubType" placeholder="— Select billing sub-type —">
+                    <ComboBox items="{viewModel>/value}" selectionChange="onSelBillingSubType" placeholder="— Select billing sub-type —" selectedKey="{requestModel>/billingSubType}">
                         <items>
-                            <core:Item  key="{viewModel>billingSubType}" text="{viewModel>billingSubType}" />
+                            <core:Item key="{viewModel>billingSubType}" text="{viewModel>billingSubType}" />
                         </items>
                     </ComboBox>
                     <Label text="Billing Description" />
-                    <TextArea value="{billing>/Description}" rows="4" placeholder="Service period, basis of charge, PO/SO references..." />
+                    <TextArea value="{requestModel>/billingDescription}" rows="4" placeholder="Service period, basis of charge, PO/SO references..." />
                     <Label ></Label>
                     <Text ></Text>
                     <Label text="Billing Timing" required="true"></Label>
-                    <RadioButtonGroup columns="2" selectedIndex="-1" select="onSelBilTiming">
+                    <RadioButtonGroup id="oRBGBillTiming" columns="2" selectedIndex="-1" select="onSelBilTiming">
                         <buttons>
                             <RadioButton text="Bill Immedietly"></RadioButton>
                             <RadioButton text="Bill at a later date"></RadioButton>
@@ -67,24 +67,24 @@
                         </Toolbar>
                         <VBox class="sapUiSmallMarginTop">
                             <Label text="Cost Center" required="true"></Label>
-                            <Input ></Input>
+                            <Input id="oIpCostCenter" showValueHelp="true" valueHelpRequest="onPressCCF4Help" value="{requestModel>/billingAffiliateCostCenter}"></Input>
                         </VBox>
                         <VBox class="sapUiSmallMarginTop">
                             <Label text="Cost Element" required="true"></Label>
-                            <Input id="oIpBillCE"></Input>
+                            <Input id="oIpBillCE" value="{requestModel>/billingAffiliateCostElement}"></Input>
                         </VBox>
 
                         <VBox class="sapUiTinyMarginTop">
                             <Label text="Company code" required="true"></Label>
-                            <Input ></Input>
+                            <Input id="oIpCompCode" value="{requestModel>/billingAffiliateCompanyCode}"></Input>
                         </VBox>
                         <VBox class="sapUiTinyMarginTop">
                             <Label text="Country Code"></Label>
-                            <Input enabled="false"></Input>
+                            <Input id="oIpCountryCode" enabled="false" value="{requestModel>/billingAffiliateCountryCode}"></Input>
                         </VBox>
                         <VBox class="sapUiTinyMarginTop">
                             <Label text="Billing Contact" required="true"></Label>
-                            <Input ></Input>
+                            <Input id="oIpBillContact" showValueHelp="true" valueHelpRequest="onPressContactF4" value="{requestModel>/billingAffiliateContact}"></Input>
                         </VBox>
                     </l:Grid>
 
@@ -98,24 +98,24 @@
                         </Toolbar>
                         <VBox class="sapUiSmallMarginTop">
                             <Label text="Cost Center" required="true"></Label>
-                            <Input ></Input>
+                            <Input id="oIpCostCenter2" showValueHelp="true" valueHelpRequest="onPressCCF4Help" value="{requestModel>/receivingAffiliateCostCenter}"></Input>
                         </VBox>
                         <VBox class="sapUiSmallMarginTop">
                             <Label text="Cost Element" required="true"></Label>
-                            <Input id="oIpRecCE"></Input>
+                            <Input id="oIpRecCE" value="{requestModel>/receivingAffiliateCostElement}"></Input>
                         </VBox>
 
                         <VBox class="sapUiTinyMarginTop">
                             <Label text="Company code" required="true"></Label>
-                            <Input ></Input>
+                            <Input id="oIpCompCode2" value="{requestModel>/receivingAffiliateCompanyCode}"></Input>
                         </VBox>
                         <VBox class="sapUiTinyMarginTop">
                             <Label text="Country Code"></Label>
-                            <Input ></Input>
+                            <Input id="oIpCountryCode2" enabled="false" value="{requestModel>/receivingAffiliateCountryCode}"></Input>
                         </VBox>
                         <VBox class="sapUiTinyMarginTop">
-                            <Label text="Receiving contact" required="true"></Label>
-                            <Input ></Input>
+                            <Label text="Receiving Contact" required="true"></Label>
+                            <Input id="oIpRecContact" showValueHelp="true" valueHelpRequest="onPressContactF4" value="{requestModel>/receivingAffiliateContact}"></Input>
                         </VBox>
                     </l:Grid>
 
@@ -123,82 +123,79 @@
 
                 <!-- <f:SimpleForm title="Actual Value in Local Currency" editable="true" layout="ColumnLayout" labelSpanL="12" columnsL="3" columnsXL="3" columnsM="3"> -->
                 <Toolbar class="sapUiSmallMarginTopBottom">
-                <core:Icon src="sap-icon://batch-payments"></core:Icon>
+                    <core:Icon src="sap-icon://batch-payments"></core:Icon>
                     <Title text="Actual Value in Local Currency"></Title>
                 </Toolbar>
                 <l:Grid defaultSpan="XL3 L3 M3 S12" vSpacing="0">
-
                     <VBox >
                         <Label text="Currency"></Label>
-                        <Input ></Input>
+                        <Input id="oIpLocalCurrency" enabled="false" value="{requestModel>/currencyLocal}"></Input>
                     </VBox>
                     <VBox >
                         <Label text="Actual Amount To Be Billed"></Label>
-                        <Input ></Input>
+                        <Input id="oIpActualAmount" value="{requestModel>/actualAmountLocal}"></Input>
                     </VBox>
                     <VBox >
                         <Label text="MarkUp%"></Label>
-                        <StepInput value="0" min="0"></StepInput>
+                        <StepInput id="oSIMarkup" value="{requestModel>/markupPercent}" min="0" change="onChangeMarkup" ></StepInput>
                     </VBox>
                     <VBox >
                         <Label text="MarkUp Amount"></Label>
-                        <Input ></Input>
+                        <Input id="oIpMarkupAmount" enabled="false" value="{requestModel>/markupAmount}"></Input>
                     </VBox>
                     <VBox class="sapUiTinyMarginTop">
                         <Label text="Total Actual Amount To Be Billed"></Label>
-                        <Input ></Input>
+                        <Input id="oIpTotalActualAmount" enabled="false" value="{requestModel>/totalAmountLocal}"></Input>
                     </VBox>
-
                 </l:Grid>
-
                 <FlexBox justifyContent="SpaceBetween" class="sapUiSmallMarginTop">
                     <VBox >
                         <Toolbar >
-                          <core:Icon src="sap-icon://batch-payments"></core:Icon>
+                            <core:Icon src="sap-icon://batch-payments"></core:Icon>
                             <Title text="Actual Value in Customer Currency"></Title>
                         </Toolbar>
                         <HBox class="sapUiSmallMarginTop">
                             <VBox >
                                 <Label text="Currency"></Label>
-                                <Input ></Input>
+                                <Input id="oIpCustomerCurrency" enabled="false" value="{requestModel>/currencyCustomer}"></Input>
                             </VBox>
                             <VBox class="sapUiLargeMarginBegin">
                                 <Label text="Total Actual Amount To Be Billed"></Label>
-                                <Input ></Input>
+                                <Input value="{requestModel>/totalAmountCustomer}" ></Input>
                             </VBox>
                         </HBox>
                     </VBox>
                     <VBox >
                         <Toolbar >
-                          <core:Icon src="sap-icon://lead"></core:Icon>
+                            <core:Icon src="sap-icon://lead"></core:Icon>
                             <Title text="Actual Value in USD"></Title>
                         </Toolbar>
                         <HBox class="sapUiSmallMarginTop">
                             <VBox >
                                 <Label text="Currency"></Label>
-                                <Input ></Input>
+                                <Input value="US" enabled="false"></Input>
                             </VBox>
                             <VBox class="sapUiLargeMarginBegin">
                                 <Label text="Total Actual Amount To Be Billed"></Label>
-                                <Input ></Input>
+                                <Input value="{requestModel>/totalAmountUSD}"></Input>
                             </VBox>
                         </HBox>
                     </VBox>
                 </FlexBox>
             </Panel>
-           
+
             <Panel headerText="SUPPORTING EVIDENCE" class="sapUiSmallMargin" width="auto" expandable="true" expanded="true">
-                <u:FileUploader ></u:FileUploader>
+                <u:FileUploader id="oFileUploader" change="onFileSelect"></u:FileUploader>
             </Panel>
             <Panel headerText="Comments &amp; History" class="sapUiSmallMargin" width="auto" expandable="true" expanded="true">
-              <CheckBox text="Please check this box if there are special accounting instructions that need to be followed by the exceptions handling team "></CheckBox>
-              <TextArea rows="4" width="100%"></TextArea>
+                <CheckBox text="Please check this box if there are special accounting instructions that need to be followed by the exceptions handling team "></CheckBox>
+                <TextArea rows="4" width="100%" value="{requestModel>/comments}"></TextArea>
             </Panel>
         </content>
         <footer>
             <Bar >
                 <contentRight>
-                    <Button text="Save" icon="sap-icon://save" type="Emphasized"></Button>
+                    <Button text="Save" icon="sap-icon://save" type="Emphasized" press="onPressSave"></Button>
                     <Button text="Submit For Approval" icon="sap-icon://accept" type="Emphasized"></Button>
                 </contentRight>
             </Bar>
