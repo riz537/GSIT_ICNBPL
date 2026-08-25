@@ -47,6 +47,12 @@
           "destination": "S4HANA-SBX",
           "path": "/sap/opu/odata/sap/ZSB_ICNPB_MASTERDATA"
         }
+      },
+      "bpa_dest": {
+        "kind": "rest",
+        "credentials": {
+          "destination": "sap_process_automation_service"
+        }
       }
     }
   }

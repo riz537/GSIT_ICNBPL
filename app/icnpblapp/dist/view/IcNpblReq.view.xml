@@ -188,7 +188,7 @@
                 <u:FileUploader id="oFileUploader" change="onFileSelect"></u:FileUploader>
             </Panel>
             <Panel headerText="Comments &amp; History" class="sapUiSmallMargin" width="auto" expandable="true" expanded="true">
-                <CheckBox text="Please check this box if there are special accounting instructions that need to be followed by the exceptions handling team "></CheckBox>
+                <CheckBox id="oChBSpclInstr"  text="Please check this box if there are special accounting instructions that need to be followed by the exceptions handling team "></CheckBox>
                 <TextArea rows="4" width="100%" value="{requestModel>/comments}"></TextArea>
             </Panel>
         </content>

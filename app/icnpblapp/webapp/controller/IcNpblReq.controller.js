@@ -241,7 +241,7 @@ sap.ui.define([
             }
 
         },
-        onPressSave: async function () {
+        saveRequest: async function () {
             var payload = this.getView().getModel("requestModel").getData();
             var oModel = this.getView().getModel();
             payload.specialInstructionsFlag = this.byId("oChBSpclInstr").getSelected() ? 'Y' : 'N';
@@ -252,17 +252,35 @@ sap.ui.define([
                 payload.billAtDate = this.byId("oDPBillingDate").getDateValue()?.toISOString().split("T")[0];
                 payload.billingTiming = "LATER";
             }
+            const oListBinding = oModel.bindList("/ICNPBRequest");
+            const oContext = oListBinding.create(payload);
+            await oContext.created();
+            const requestId = oContext.getProperty("ID");
+            this._requestId = requestId;
+            await this.uploadAttachment(requestId);
+            return requestId;
+
+        },
+        onPressSave: async function () {
             try {
-                const oListBinding = oModel.bindList("/ICNPBRequest");
-                const oContext = oListBinding.create(payload);
-                await oContext.created();
-                const requestId = oContext.getProperty("ID");
-                this._requestId = requestId;
-                await this.uploadAttachment(requestId);
+                await this.saveRequest();
                 sap.m.MessageBox.success("Request Saved Successfully");
             } catch (oError) {
                 console.error(oError);
                 sap.m.MessageBox.error("Save Failed");
+            }
+        },
+        onPressSubmit: async function () {
+            try {
+                const requestId = await this.saveRequest();
+                const oModel = this.getView().getModel();
+                const oAction = oModel.bindContext("/submitForApproval(...)");
+                oAction.setParameter( "requestId",  requestId );
+                await oAction.execute();
+                sap.m.MessageBox.success("Submitted for Approval");
+            } catch (oError) {
+                console.error(oError);
+                sap.m.MessageBox.error("Submission Failed");
             }
         }
 

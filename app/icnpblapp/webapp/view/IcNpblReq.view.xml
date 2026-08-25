@@ -196,7 +196,7 @@
             <Bar >
                 <contentRight>
                     <Button text="Save" icon="sap-icon://save" type="Emphasized" press="onPressSave"></Button>
-                    <Button text="Submit For Approval" icon="sap-icon://accept" type="Emphasized"></Button>
+                    <Button text="Submit For Approval" icon="sap-icon://accept" type="Emphasized" press="onPressSubmit"></Button>
                 </contentRight>
             </Bar>
         </footer>

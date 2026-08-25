@@ -235,15 +235,16 @@ sap.ui.define([
                 const oBinding = oModel.bindList("/ICNPBAttachment");
                 const oContext = oBinding.create(payload);
                 await oContext.created();
-            }catch (oError) {
+            } catch (oError) {
                 console.error(oError);
                 sap.m.MessageBox.error("Upload Failed");
             }
-           
+
         },
         onPressSave: async function () {
             var payload = this.getView().getModel("requestModel").getData();
             var oModel = this.getView().getModel();
+            payload.specialInstructionsFlag = this.byId("oChBSpclInstr").getSelected() ? 'Y' : 'N';
             if (this.byId("oRBGBillTiming").getSelectedIndex() === 0) {
                 payload.billAtDate = new Date().toISOString().split("T")[0];
                 payload.billingTiming = "IMMEDIATE";

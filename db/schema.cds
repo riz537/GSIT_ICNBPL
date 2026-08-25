@@ -181,6 +181,7 @@ entity ICNPBRequest : cuid, managed {
 
     approvalHistory               : Composition of many ICNPBApprovalHistory
                                         on approvalHistory.request = $self;
+    workflowInstanceId : String(100);
 }
 
 /* =========================

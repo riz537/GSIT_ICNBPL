@@ -15,5 +15,6 @@ service IcNpblService {
     entity ICVendor                 as projection on md.ICVendor;
     function getBillingSubTypes(billingType: String) returns array of BillingSubTypeDerivation;
     function getCountryCode(companyCode: String)     returns AffiliateMaster;
+    action submitForApproval(requestId : UUID) returns String;
 
 }
