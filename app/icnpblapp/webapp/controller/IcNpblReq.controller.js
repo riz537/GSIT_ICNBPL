@@ -55,12 +55,14 @@ sap.ui.define([
             this.byId("oIpRecCE").setValue(costElement);
         },
         onPressCCF4Help: function (oEvent) {
+            console.log("Data is coming from S4HANA-ICNPB-POC");
             this.Input = oEvent.getSource();
             if (!this.ccDialog) {
                 this.ccDialog = sap.ui.xmlfragment(this.getView().getId(), "com.ui5.lly.icnpbl.icnpblapp.Fragments.CCF4Help", this);
                 this.getView().addDependent(this.ccDialog);
             }
             this.ccDialog.open();
+
         },
         onCloseCCDialog: function () {
             this.ccDialog.close();
@@ -83,14 +85,51 @@ sap.ui.define([
             }
             this.ccDialog.close();
         },
-        onChangeMarkup: function () {
+        onChangeMarkup: async function () {
             var markup = this.byId("oSIMarkup").getValue();
             var actualAmount = this.byId("oIpActualAmount").getValue();
             var markupAmount = actualAmount * (markup / 100);
             var totalActualAmount = parseFloat(actualAmount) + parseFloat(markupAmount);
             this.byId("oIpMarkupAmount").setValue(markupAmount);
             this.byId("oIpTotalActualAmount").setValue(totalActualAmount);
+            var localCurrency = this.byId("oIpLocalCurrency").getValue();
+            var customerCurrency = this.byId("oIpCustomerCurrency").getValue();
+            const amount = parseFloat(this.byId("oIpTotalActualAmount").getValue()) || 0;
+            const result = await this.getExchangeRate(10, "EUR", "USD");
+            console.log("result");
+            console.log(result);
+            if (localCurrency === customerCurrency) {
+                this.byId("oIpTotalAmountCustomer").setValue(totalActualAmount);
+            } else {
+                //call and get the amount in custmer currency
+                const result = await this.getExchangeRate(amount, localCurrency, customerCurrency);
+                console.log("result");
+                console.log(result);
 
+            }
+            if (localCurrency === "US") {
+                this.byId("oIpTotalAmountUSD").setValue(totalActualAmount);
+            } if (customerCurrency === "US") {
+                this.byId("oIpTotalAmountUSD").setValue(this.byId("oIpTotalAmountCustomer").getValue());
+            }
+        },
+        async getExchangeRate(amount, sourceCurrency, targetCurrency) {
+            try {
+
+                const oModel = this.getView().getModel();
+                const oFunction = oModel.bindContext("/getExchangeRate(...)");
+                oFunction.setParameter("sourceAmount", amount);
+                oFunction.setParameter("sourceCurrency", sourceCurrency);
+                oFunction.setParameter("targetCurrency", targetCurrency);
+                await oFunction.execute();
+                const convertedAmount = oFunction.getBoundContext().getObject().value;
+                console.log("Converted Amount", convertedAmount);
+                console.log(oFunction.getBoundContext().getObject());
+                //this.byId("oIpCustomerAmount").setValue(convertedAmount);
+                return convertedAmount;
+            } catch (error) {
+                console.error(error);
+            }
         },
         async getCountryCode(CompanyCode) {
             try {
@@ -228,7 +267,7 @@ sap.ui.define([
                 fileName: file.name,
                 mimeType: file.type,
                 fileContent: base64Content,
-                uploadedAt: new Date().toISOString()
+                uploadedAt: new Date().toISOString(),
             };
             const oModel = this.getView().getModel();
             try {
@@ -271,13 +310,15 @@ sap.ui.define([
             }
         },
         onPressSubmit: async function () {
+            sap.ui.core.BusyIndicator.show(0);
             try {
                 const requestId = await this.saveRequest();
                 const oModel = this.getView().getModel();
                 const oAction = oModel.bindContext("/submitForApproval(...)");
-                oAction.setParameter( "requestId",  requestId );
+                oAction.setParameter("requestId", requestId);
                 await oAction.execute();
                 sap.m.MessageBox.success("Submitted for Approval");
+                sap.ui.core.BusyIndicator.hide();
             } catch (oError) {
                 console.error(oError);
                 sap.m.MessageBox.error("Submission Failed");

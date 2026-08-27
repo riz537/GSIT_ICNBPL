@@ -161,7 +161,7 @@
                             </VBox>
                             <VBox class="sapUiLargeMarginBegin">
                                 <Label text="Total Actual Amount To Be Billed"></Label>
-                                <Input value="{requestModel>/totalAmountCustomer}" ></Input>
+                                <Input id="oIpTotalAmountCustomer" value="{requestModel>/totalAmountCustomer}" ></Input>
                             </VBox>
                         </HBox>
                     </VBox>
@@ -177,7 +177,7 @@
                             </VBox>
                             <VBox class="sapUiLargeMarginBegin">
                                 <Label text="Total Actual Amount To Be Billed"></Label>
-                                <Input value="{requestModel>/totalAmountUSD}"></Input>
+                                <Input id="oIpTotalAmountUSD" value="{requestModel>/totalAmountUSD}"></Input>
                             </VBox>
                         </HBox>
                     </VBox>
@@ -195,8 +195,8 @@
         <footer>
             <Bar >
                 <contentRight>
-                    <Button text="Save" icon="sap-icon://save" type="Emphasized" press="onPressSave"></Button>
-                    <Button text="Submit For Approval" icon="sap-icon://accept" type="Emphasized"></Button>
+                    <!-- <Button text="Save" icon="sap-icon://save" type="Emphasized" press="onPressSave"></Button> -->
+                    <Button text="Submit For Approval" icon="sap-icon://accept" type="Emphasized" press="onPressSubmit"></Button>
                 </contentRight>
             </Bar>
         </footer>

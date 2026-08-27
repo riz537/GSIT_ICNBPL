@@ -194,6 +194,7 @@ entity ICNPBAttachment : cuid {
     fileContent      : LargeBinary  @Core.MediaType: mimeType  @Core.ContentDisposition.Filename: fileName  @Core.ContentDisposition.Type: 'attachment';
     fileName         : String(255);
     mimeType         : String(100)  @Core.IsMediaType: true;
+    uploadUrl        : LargeString;
     storageRef       : String(500);
     ocrExtractedText : LargeString;
     uploadedBy       : String(255);

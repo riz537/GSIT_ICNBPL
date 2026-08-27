@@ -44,7 +44,7 @@
         "csrf": true,
         "csrfInBatch": true,
         "credentials": {
-          "destination": "S4HANA-SBX",
+          "destination": "S4HANA-ICNPB-POC",
           "path": "/sap/opu/odata/sap/ZSB_ICNPB_MASTERDATA"
         }
       },
