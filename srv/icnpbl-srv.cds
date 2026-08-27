@@ -1,7 +1,6 @@
 using {icnpbl as db} from '../db/schema';
 using {masterdata_edmx as md} from './external/masterdata.edmx';
 
-
 service IcNpblService {
     entity ICNPBRequest             as projection on db.ICNPBRequest;
     entity ICNPBAttachment          as projection on db.ICNPBAttachment;

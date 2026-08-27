@@ -67,7 +67,8 @@
                         </Toolbar>
                         <VBox class="sapUiSmallMarginTop">
                             <Label text="Cost Center" required="true"></Label>
-                            <Input id="oIpCostCenter" showValueHelp="true" valueHelpRequest="onPressCCF4Help" value="{requestModel>/billingAffiliateCostCenter}"></Input>
+                            <!-- <Input id="oIpCostCenter" showValueHelp="true" valueHelpRequest="onPressCCF4Help" value="{requestModel>/billingAffiliateCostCenter}"></Input> -->
+                            <Input id="oIpCostCenter" value="{requestModel>/billingAffiliateCostCenter}"  change="onEnterCC"></Input>
                         </VBox>
                         <VBox class="sapUiSmallMarginTop">
                             <Label text="Cost Element" required="true"></Label>
@@ -98,7 +99,8 @@
                         </Toolbar>
                         <VBox class="sapUiSmallMarginTop">
                             <Label text="Cost Center" required="true"></Label>
-                            <Input id="oIpCostCenter2" showValueHelp="true" valueHelpRequest="onPressCCF4Help" value="{requestModel>/receivingAffiliateCostCenter}"></Input>
+                            <!-- <Input id="oIpCostCenter2" showValueHelp="true" valueHelpRequest="onPressCCF4Help" value="{requestModel>/receivingAffiliateCostCenter}"></Input> -->
+                            <Input id="oIpCostCenter2"  value="{requestModel>/receivingAffiliateCostCenter}" change="onEnterCC"></Input>
                         </VBox>
                         <VBox class="sapUiSmallMarginTop">
                             <Label text="Cost Element" required="true"></Label>

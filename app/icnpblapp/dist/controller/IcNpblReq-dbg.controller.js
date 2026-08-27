@@ -54,6 +54,68 @@ sap.ui.define([
             this.byId("oIpBillCE").setValue(costElement);
             this.byId("oIpRecCE").setValue(costElement);
         },
+        getCostCenterDetails: async function (sCostCenter) {
+            try {
+                const oModel = this.getView().getModel();
+                const oBinding = oModel.bindList(
+                    "/CostCenter",
+                    undefined,
+                    undefined,
+                    new sap.ui.model.Filter({
+                        path: "CostCenter",
+                        operator: sap.ui.model.FilterOperator.EQ,
+                        value1: sCostCenter
+                    })
+                );
+                const aContexts = await oBinding.requestContexts();
+                if (aContexts.length > 0) {
+                    const oData = aContexts[0].getObject();
+                    console.log(oData);
+                    return oData;
+                }
+                return null;
+            } catch (err) {
+                console.error(err);
+            }
+        },
+        onEnterCC: async function (oEvent) {
+            this.Input = oEvent.getSource();
+            if (this.Input.getId().includes("CostCenter2")) {
+                this.byId("oIpCompCode2").setValue("");
+                this.byId("oIpCountryCode2").setValue("");
+                this.byId("oIpCustomerCurrency").setValue("");
+
+            } else {
+                this.byId("oIpCompCode").setValue("");
+                this.byId("oIpCountryCode").setValue("");
+                this.byId("oIpLocalCurrency").setValue("");
+            }
+            var object = await this.getCostCenterDetails(this.Input.getValue());
+            if (object) {
+                if (this.Input.getId().includes("CostCenter2")) {
+                    this.byId("oIpCompCode2").setValue(object ? object.CompanyCode : "");
+                } else {
+                    this.byId("oIpCompCode").setValue(object ? object.CompanyCode : "");
+                }
+                var result = await this.getCountryCode(object.CompanyCode);
+                if (result) {
+                    if (this.Input.getId().includes("CostCenter2")) {
+                        this.byId("oIpCountryCode2").setValue(result.countryCode ? result.countryCode : "");
+                        this.byId("oIpCustomerCurrency").setValue(result.localCurrency ? result.localCurrency : "");
+                    } else {
+                        this.byId("oIpCountryCode").setValue(result.countryCode ? result.countryCode : "");
+                        this.byId("oIpLocalCurrency").setValue(result.localCurrency ? result.localCurrency : "");
+                    }
+                } else {
+                    MessageBox.error("No Country data maintained against this company code");
+                }
+
+            } else {
+                MessageBox.error("Not a valid cost center");
+            }
+
+
+        },
         onPressCCF4Help: function (oEvent) {
             console.log("Data is coming from S4HANA-ICNPB-POC");
             this.Input = oEvent.getSource();
@@ -62,7 +124,6 @@ sap.ui.define([
                 this.getView().addDependent(this.ccDialog);
             }
             this.ccDialog.open();
-
         },
         onCloseCCDialog: function () {
             this.ccDialog.close();
@@ -95,22 +156,26 @@ sap.ui.define([
             var localCurrency = this.byId("oIpLocalCurrency").getValue();
             var customerCurrency = this.byId("oIpCustomerCurrency").getValue();
             const amount = parseFloat(this.byId("oIpTotalActualAmount").getValue()) || 0;
-            const result = await this.getExchangeRate(10, "EUR", "USD");
-            console.log("result");
-            console.log(result);
+            //const result = await this.getExchangeRate(10, "EUR", "USD");
+
             if (localCurrency === customerCurrency) {
                 this.byId("oIpTotalAmountCustomer").setValue(totalActualAmount);
             } else {
                 //call and get the amount in custmer currency
-                const result = await this.getExchangeRate(amount, localCurrency, customerCurrency);
+                const convertedAmount = await this.getExchangeRate(amount, localCurrency, customerCurrency);
                 console.log("result");
                 console.log(result);
-
+                this.byId("oIpTotalAmountCustomer").setValue(convertedAmount);
             }
-            if (localCurrency === "US") {
+            if (localCurrency === "USD") {
                 this.byId("oIpTotalAmountUSD").setValue(totalActualAmount);
-            } if (customerCurrency === "US") {
+            } else if (customerCurrency === "USD") {
                 this.byId("oIpTotalAmountUSD").setValue(this.byId("oIpTotalAmountCustomer").getValue());
+            } else {
+                const convertedAmount = await this.getExchangeRate(amount, localCurrency, "USD");
+                console.log("result");
+                console.log(result);
+                this.byId("oIpTotalAmountUSD").setValue(convertedAmount);
             }
         },
         async getExchangeRate(amount, sourceCurrency, targetCurrency) {
@@ -138,7 +203,7 @@ sap.ui.define([
                 oFunction.setParameter("companyCode", CompanyCode);
                 await oFunction.execute();
                 const oData = oFunction.getBoundContext().getObject();
-                return oData.countryCode;
+                return oData;
                 console.log(oData);
             } catch (err) {
                 console.error(err);
