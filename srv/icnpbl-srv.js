@@ -236,7 +236,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
           AccountAssignmentCategory: "K",
           TaxCode: "NA",
           PurchaseOrderItemText: request.billingDescription,
-          Plant: affiliateReceiving?.purchasingOrg,
+          Plant: affiliateReceiving?.plant,
           SupplierMaterialNumber: request.billingSubType,
           OrderQuantity: "1.000",
           PurchaseOrderQuantityUnit: "SU",
@@ -266,19 +266,44 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       console.log(payload);
       console.log("Stringyfied payload");
       console.log(JSON.stringify(payload));
+      try {
+        const result = await poSrv.send({
+          method: 'POST',
+          path: '/A_PurchaseOrder',
+          data: payload
+        });
+        console.log("PO CREATION Response---->");
+        console.log(result);
 
-      const result = await poSrv.send({
-        method: 'POST',
-        path: '/A_PurchaseOrder',
-        data: payload
-      });
-      console.log("PO CREATION Response---->");
-      console.log(result);
-
-      return "SUCCESS";
+        const poNumber = result.PurchaseOrder;
+        if (!poNumber) {
+          throw new Error("PO Number not returned from S4");
+        }
+        await UPDATE(ICNPBRequest)
+          .set({
+            purchaseOrderNumber: poNumber,
+            status: 'POSTED'
+          })
+          .where({
+            ID: requestId
+          });
+        return "SUCCESS";
+      } catch (error) {
+        console.error("PO CREATION FAILED");
+        console.error(error);
+        await UPDATE(ICNPBRequest)
+          .set({
+            status: 'ERROR',
+            errorMessage:
+              error.message?.substring(0, 500) ||
+              'PO Creation Failed'
+          })
+          .where({
+            ID: requestId
+          });
+        return "ERROR";
+      }
     });
-
-
     return super.init()
   }
 }

@@ -88,6 +88,7 @@ sap.ui.define([
             }
         },
         onEnterCC: async function (oEvent) {
+            sap.ui.core.BusyIndicator.show(0);
             this.Input = oEvent.getSource();
             if (this.Input.getId().includes("CostCenter2")) {
                 this.byId("oIpCompCode2").setValue("");
@@ -122,7 +123,7 @@ sap.ui.define([
             } else {
                 MessageBox.error("Not a valid cost center");
             }
-
+            sap.ui.core.BusyIndicator.hide();
 
         },
         onPressCCF4Help: function (oEvent) {
@@ -156,6 +157,7 @@ sap.ui.define([
             this.ccDialog.close();
         },
         onChangeMarkup: async function () {
+            sap.ui.core.BusyIndicator.show(0);
             var markup = this.byId("oSIMarkup").getValue();
             var actualAmount = this.byId("oIpActualAmount").getValue();
             var markupAmount = actualAmount * (markup / 100);
@@ -182,6 +184,7 @@ sap.ui.define([
                 const convertedAmount = await this.getExchangeRate(amount, localCurrency, "USD");
                 this.byId("oIpTotalAmountUSD").setValue(convertedAmount);
             }
+            sap.ui.core.BusyIndicator.hide();
         },
         async getExchangeRate(amount, sourceCurrency, targetCurrency) {
             try {
@@ -266,7 +269,16 @@ sap.ui.define([
                 // Binding
                 oContactTable.bindItems({
                     path: "/ICCustomer",
-                    template: oCustTemplate
+                    template: oCustTemplate,
+                    events: {
+                        dataRequested: function () {
+                            sap.ui.core.BusyIndicator.show(0);
+                        },
+
+                        dataReceived: function () {
+                            sap.ui.core.BusyIndicator.hide();
+                        }
+                    }
                 });
             } else {
                 oContactTable.addColumn(
@@ -299,7 +311,16 @@ sap.ui.define([
                 // Binding
                 oContactTable.bindItems({
                     path: "/ICVendor",
-                    template: oVendTemplate
+                    template: oVendTemplate,
+                    events: {
+                        dataRequested: function () {
+                            sap.ui.core.BusyIndicator.show(0);
+                        },
+
+                        dataReceived: function () {
+                            sap.ui.core.BusyIndicator.hide();
+                        }
+                    }
                 });
             }
         },

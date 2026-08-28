@@ -104,7 +104,7 @@ entity ICNPBRequest : cuid, managed {
 
     billingSubType                : String;
 
-    billingDescription            : String(18);
+    billingDescription            : String(500);
 
     billingTiming                 : BillingTiming;
     billAtDate                    : Date;

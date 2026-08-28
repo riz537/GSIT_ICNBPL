@@ -12,6 +12,7 @@
                 <ToolbarSpacer ></ToolbarSpacer>
                 <Label text="Dark Mode"></Label>
                 <Switch state="false" change="onThemeSwitch"></Switch>
+                <Button text="Navigate to Dashboard" icon="sap-icon://open-command-field" type="Emphasized" press=".onOpenDashboard"/>
             </Toolbar>
         </customHeader>
         <content>
@@ -35,7 +36,7 @@
                     <Label text="Billing Sub-Type" required="true" />
                     <ComboBox items="{viewModel>/value}" selectionChange="onSelBillingSubType" placeholder="— Select billing sub-type —" selectedKey="{requestModel>/billingSubType}">
                         <items>
-                            <core:Item key="{viewModel>billingSubType}" text="{viewModel>billingSubType}" />
+                            <core:Item key="{viewModel>sapMaterial}" text="{viewModel>billingSubType}" />
                         </items>
                     </ComboBox>
                     <Label text="Billing Description" />
