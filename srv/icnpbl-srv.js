@@ -3,17 +3,26 @@ const cds = require('@sap/cds')
 module.exports = class IcNpblService extends cds.ApplicationService {
   async init() {
 
-    const { ICNPBAttachment, ICCustomer, ICVendor, ExchangeRateConversion, CostCenter, ICNPBRequest, Users, BillingTypes, BillingSubTypeDerivation, AffiliateMaster, MarkupDerivation } = cds.entities('IcNpblService')
+    const { A_PurchaseOrder, ICNPBAttachment, ICCustomer, ICVendor, ExchangeRateConversion, CostCenter, ICNPBRequest, Users, BillingTypes, BillingSubTypeDerivation, AffiliateMaster, MarkupDerivation } = cds.entities('IcNpblService')
 
     const mdSrv = await cds.connect.to('masterdata_edmx');
+    const poSrv = await cds.connect.to('API_PURCHASEORDER_PROCESS_SRV_edmx');
 
     this.on('READ', [ICCustomer, ICVendor, CostCenter], async req => {
       console.log("Inside READ --> req.query below");
       console.log(JSON.stringify(req.query, null, 2));
       return mdSrv.run(req.query);
     });
+
+    this.on('CREATE', A_PurchaseOrder, async req => {
+      console.log("Inside CREATE --> A_PurchaseOrder");
+      console.log(JSON.stringify(req.query, null, 2));
+      return poSrv.run(req.query);
+    });
+
+
     this.on('getExchangeRate', async req => {
-      const {sourceAmount,sourceCurrency,targetCurrency} = req.data;
+      const { sourceAmount, sourceCurrency, targetCurrency } = req.data;
       const today = new Date().toISOString().split('T')[0];
 
       const result = await mdSrv.send({
@@ -26,7 +35,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
           `p_ExRateDate=datetime'${today}T00:00:00'` +
           `)/Set`
       });
-     console.log("converted Amount");
+      console.log("converted Amount");
       console.log(result);
       return result[0].ConvertedAmount;
     });
@@ -93,6 +102,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       const payload = {
         "definitionId": "us10.lly-sbx.icnpb.iCNPBProcess",
         "context": {
+          "requestId": requestId,
           "billingType": request.billingType,
           "billingOption": request.billingOption,
           "billingSubType": request.billingSubType,
@@ -135,7 +145,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         console.log(workFlowRes);
         await UPDATE(ICNPBRequest)
           .set({
-            status: 'SUBMITTED',
+            status: 'PENDING_APPROVAL',
             workflowInstanceId:
               workFlowRes.id
           })
@@ -155,6 +165,99 @@ module.exports = class IcNpblService extends cds.ApplicationService {
 
     });
 
+    this.on('updateRequestStatus', async req => {
+      const { requestId, status } = req.data;
+      var count = await UPDATE(ICNPBRequest)
+        .set({
+          status: status
+        })
+        .where({
+          ID: requestId
+        });
+      //return `Request ${requestId} updated to ${status}`;
+      console.log("updateRequestStatus --->" + count);
+      if (count > 0) {
+        return "SUCCESS";
+      } else {
+        return "ERROR";
+      }
+
+    });
+
+    this.on('createPurchaseOrder', async req => {
+      const { requestId } = req.data;
+      const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
+      if (!request) {
+        req.error(404, 'Request not found');
+      }
+
+      const affiliateBilling = await SELECT.one.from(AffiliateMaster)
+        .where({
+          companyCode: request.billingAffiliateCompanyCode
+        });
+
+      const affiliateReceiving = await SELECT.one.from(AffiliateMaster)
+        .where({
+          companyCode: request.receivingAffiliateCompanyCode
+        });
+
+      const payload = {
+        PurchaseOrder: "",
+        CompanyCode: request.receivingAffiliateCompanyCode,
+        PurchaseOrderType: "NB",
+        Supplier: affiliateBilling?.pVend,
+        PurchasingOrganization: affiliateReceiving?.purchasingOrg,
+        PurchasingGroup: "4IB",
+        PurchaseOrderDate: new Date().toISOString().split("T")[0] + "T00:00:00",
+        DocumentCurrency: request.currencyCustomer,
+
+        to_PurchaseOrderItem: [{
+          PurchaseOrder: "",
+          PurchaseOrderItem: "1",
+          AccountAssignmentCategory: "K",
+          TaxCode: "NA",
+          PurchaseOrderItemText: request.billingDescription,
+          Plant: affiliateReceiving?.purchasingOrg,
+          SupplierMaterialNumber: request.billingSubType,
+          OrderQuantity: "1.000",
+          PurchaseOrderQuantityUnit: "SU",
+          OrderPriceUnit: "SU",
+          OrderPriceUnitToOrderUnitNmrtr: "1",
+          OrdPriceUnitToOrderUnitDnmntr: "1",
+          DocumentCurrency: request.currencyCustomer,
+          NetPriceAmount: request.totalAmountCustomer,
+          NetPriceQuantity: "1",
+          Material: request.billingSubType,
+
+          to_AccountAssignment: [{
+            PurchaseOrder: "",
+            PurchaseOrderItem: "1",
+            AccountAssignmentNumber: "1",
+            Quantity: "1.000",
+            MultipleAcctAssgmtDistrPercent: "0.0",
+            DocumentCurrency: request.currencyCustomer,
+            PurgDocNetAmount: "0.00",
+            GLAccount: request.receivingAffiliateCostElement,
+            BusinessArea: "A",
+            CostCenter: request.receivingAffiliateCostCenter
+          }]
+        }]
+      };
+      console.log("PO CREATION Payload ----->");
+      console.log(payload);
+      console.log("Stringyfied payload");
+      console.log(JSON.stringify(payload));
+
+      const result = await poSrv.send({
+        method: 'POST',
+        path: '/A_PurchaseOrder',
+        data: payload
+      });
+     console.log("PO CREATION Response---->");
+      console.log(result);
+
+      return "SUCCESS";
+    });
 
 
     return super.init()

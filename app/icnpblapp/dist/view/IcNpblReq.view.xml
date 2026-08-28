@@ -163,7 +163,7 @@
                             </VBox>
                             <VBox class="sapUiLargeMarginBegin">
                                 <Label text="Total Actual Amount To Be Billed"></Label>
-                                <Input id="oIpTotalAmountCustomer" value="{requestModel>/totalAmountCustomer}" ></Input>
+                                <Input id="oIpTotalAmountCustomer" value="{requestModel>/totalAmountCustomer}" enabled="false"></Input>
                             </VBox>
                         </HBox>
                     </VBox>
@@ -175,11 +175,11 @@
                         <HBox class="sapUiSmallMarginTop">
                             <VBox >
                                 <Label text="Currency"></Label>
-                                <Input value="US" enabled="false"></Input>
+                                <Input value="USD" enabled="false"></Input>
                             </VBox>
                             <VBox class="sapUiLargeMarginBegin">
                                 <Label text="Total Actual Amount To Be Billed"></Label>
-                                <Input id="oIpTotalAmountUSD" value="{requestModel>/totalAmountUSD}"></Input>
+                                <Input id="oIpTotalAmountUSD" value="{requestModel>/totalAmountUSD}" enabled="false"></Input>
                             </VBox>
                         </HBox>
                     </VBox>

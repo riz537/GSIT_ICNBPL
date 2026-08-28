@@ -53,6 +53,16 @@
         "credentials": {
           "destination": "sap_process_automation_service"
         }
+      },
+      "API_PURCHASEORDER_PROCESS_SRV_edmx": {
+        "kind": "odata-v2",
+        "model": "srv/external/API_PURCHASEORDER_PROCESS_SRV.edmx",
+        "csrf": true,
+        "csrfInBatch": true,
+        "credentials": {
+          "destination": "S4HANA-ICNPB-POC",
+          "path": "/sap/opu/odata/sap/API_PURCHASEORDER_PROCESS_SRV"
+        }
       }
     }
   }

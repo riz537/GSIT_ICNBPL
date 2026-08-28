@@ -163,8 +163,6 @@ sap.ui.define([
             } else {
                 //call and get the amount in custmer currency
                 const convertedAmount = await this.getExchangeRate(amount, localCurrency, customerCurrency);
-                console.log("result");
-                console.log(result);
                 this.byId("oIpTotalAmountCustomer").setValue(convertedAmount);
             }
             if (localCurrency === "USD") {
@@ -173,8 +171,6 @@ sap.ui.define([
                 this.byId("oIpTotalAmountUSD").setValue(this.byId("oIpTotalAmountCustomer").getValue());
             } else {
                 const convertedAmount = await this.getExchangeRate(amount, localCurrency, "USD");
-                console.log("result");
-                console.log(result);
                 this.byId("oIpTotalAmountUSD").setValue(convertedAmount);
             }
         },
