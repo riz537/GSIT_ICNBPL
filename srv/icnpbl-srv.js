@@ -108,6 +108,8 @@ module.exports = class IcNpblService extends cds.ApplicationService {
     this.on('submitForApproval', async req => {
       console.log("inside submitForApproval");
       console.log(req.data);
+      console.log("user information ---->");
+      console.log(JSON.stringify(req.user));
       const { requestId } = req.data;
       const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
       const attachment = await SELECT.one.from(ICNPBAttachment).where({ request_ID: requestId });

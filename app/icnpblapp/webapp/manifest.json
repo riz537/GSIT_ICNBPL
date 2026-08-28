@@ -30,6 +30,10 @@
         "icnpblapp-display": {
           "semanticObject": "icnpblapp",
           "action": "display",
+          "title": "Inter Company Non Product Billing",
+          "subTitle": "Create ICNPB Requests",
+          "icon": "sap-icon://money-bills",
+          "info": "ICNPB",
           "signature": {
             "parameters": {},
             "additionalParameters": "allowed"
@@ -110,7 +114,7 @@
           "target": [
             "TargetIcNpblReq"
           ]
-       },
+        },
         {
           "name": "RouteDashboard",
           "pattern": "dashboard",
