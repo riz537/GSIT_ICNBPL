@@ -86,6 +86,25 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       return result;
     });
 
+    this.on("getCounts", async (req) => {
+
+
+      const submitted = await SELECT.one.from(ICNPBRequest).columns('count(*) as CNT').where({ status: "SUBMITTED" });
+
+      const approved = await SELECT.one.from(ICNPBRequest).columns('count(*) as CNT').where({ status: "APPROVED" });
+
+      const rejected = await SELECT.one.from(ICNPBRequest).columns('count(*) as CNT').where({ status: "REJECTED" });
+
+      const draft = await SELECT.one.from(ICNPBRequest).columns('count(*) as CNT').where({ status: "DRAFT" });
+
+      return {
+        submitted: submitted?.CNT || 0,
+        approved: approved?.CNT || 0,
+        rejected: rejected?.CNT || 0,
+        draft: draft?.CNT || 0
+      };
+    });
+
     this.on('submitForApproval', async req => {
       console.log("inside submitForApproval");
       console.log(req.data);
@@ -253,7 +272,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         path: '/A_PurchaseOrder',
         data: payload
       });
-     console.log("PO CREATION Response---->");
+      console.log("PO CREATION Response---->");
       console.log(result);
 
       return "SUCCESS";

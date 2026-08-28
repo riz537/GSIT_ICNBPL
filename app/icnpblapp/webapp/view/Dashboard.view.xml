@@ -1,0 +1,121 @@
+<mvc:View controllerName="com.ui5.lly.icnpbl.icnpblapp.controller.Dashboard"
+    displayBlock="true"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m">
+    <Page title="IC NPB Operations">
+
+    <content>
+
+        <!-- KPI Section -->
+        <HBox class="sapUiMediumMarginBottom">
+
+            <VBox class="kpiCard">
+                <Title text="Submitted"/>
+                <Text text="{dashboard>/submitted}" class="kpiValue"/>
+            </VBox>
+
+            <VBox class="kpiCard approvedCard">
+                <Title text="Approved"/>
+                <Text text="{dashboard>/approved}" class="kpiValue"/>
+            </VBox>
+
+            <VBox class="kpiCard rejectedCard">
+                <Title text="Rejected"/>
+                <Text text="{dashboard>/rejected}" class="kpiValue"/>
+            </VBox>
+
+            <VBox class="kpiCard pendingCard">
+                <Title text="Pending"/>
+                <Text text="{dashboard>/draft}" class="kpiValue"/>
+            </VBox>
+
+        </HBox>
+
+        <!-- Filter Pills -->
+        <HBox class="sapUiSmallMarginBottom">
+
+            <Button
+                text="All"
+                type="Emphasized"
+                press=".onAllPress"/>
+
+            <Button
+                text="Submitted"
+                press=".onSubmittedPress"/>
+
+            <Button
+                text="Approved"
+                press=".onApprovedPress"/>
+
+            <Button
+                text="Rejected"
+                press=".onRejectedPress"/>
+
+            <Button
+                text="Pending"
+                press=".onPendingPress"/>
+
+        </HBox>
+
+        <!-- Search -->
+        <SearchField
+            width="100%"
+            search=".onSearch"/>
+
+        <!-- Request Table -->
+        <Table
+            id="requestTable"
+            items="{/ICNPBRequest}">
+
+            <columns>
+
+                <Column>
+                    <Text text="Request"/>
+                </Column>
+
+                <Column>
+                    <Text text="Status"/>
+                </Column>
+
+                <Column>
+                    <Text text="billing Option"/>
+                </Column>
+
+                <Column>
+                    <Text text="billingOption Date"/>
+                </Column>
+
+            </columns>
+
+            <items>
+
+                <ColumnListItem
+                    type="Navigation"
+                    press=".onRequestPress">
+
+                    <cells>
+
+                        <Text text="{requestNumber}"/>
+
+                        <ObjectStatus
+                            text="{status}"
+                            state="{= ${status} === 'APPROVED' ? 'Success' :
+                                ${status} === 'DRAFT' ? 'Warning' : 'Information'}"/>
+
+                        <Text text="{billingOption}"/>
+
+                        <Text text="{billingTiming}"/>
+
+                    </cells>
+
+                </ColumnListItem>
+
+            </items>
+
+        </Table>
+
+    </content>
+
+</Page>
+</mvc:View>
+

@@ -110,12 +110,21 @@
           "target": [
             "TargetIcNpblReq"
           ]
+       },
+        {
+          "name": "RouteDashboard",
+          "pattern": "dashboard",
+          "target": "TargetDashboard"
         }
       ],
       "targets": {
         "TargetIcNpblReq": {
           "id": "IcNpblReq",
           "name": "IcNpblReq"
+        },
+        "TargetDashboard": {
+          "id": "Dashboard",
+          "name": "Dashboard"
         }
       }
     },

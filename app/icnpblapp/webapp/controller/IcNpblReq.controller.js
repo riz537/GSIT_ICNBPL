@@ -34,6 +34,15 @@ sap.ui.define([
                 sap.ui.getCore().applyTheme("sap_horizon");
             }
         },
+
+        onOpenDashboard: function () {
+
+            this.getOwnerComponent()
+                .getRouter()
+                .navTo("RouteDashboard");
+
+        },
+
         async onSelBillingType(oEvent) {
             try {
                 const sBillingType = this.billingTypes[oEvent.getSource().getSelectedKey()];

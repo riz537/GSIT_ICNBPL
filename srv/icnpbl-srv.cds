@@ -15,14 +15,21 @@ service IcNpblService {
     entity ICVendor                 as projection on md.ICVendor;
     entity A_PurchaseOrder          as projection on PO.A_PurchaseOrder;
 
-    function getBillingSubTypes(billingType: String)    returns array of BillingSubTypeDerivation;
-    function getCountryCode(companyCode: String)        returns AffiliateMaster;
-    function getExchangeRate(sourceAmount: Decimal(15, 2),sourceCurrency: String(5),targetCurrency: String(5)) returns Decimal(15, 2);
-    function getCounts() returns {submitted : Integer; approved  : Integer; rejected  : Integer; draft     : Integer;};
-    action   submitForApproval(requestId: UUID)         returns String;
-    action updateRequestStatus( requestId : UUID,status: String) returns String;
-    action createPurchaseOrder(  requestId : UUID) returns String;
+    function getBillingSubTypes(billingType: String)                                                             returns array of BillingSubTypeDerivation;
+    function getCountryCode(companyCode: String)                                                                 returns AffiliateMaster;
+    function getExchangeRate(sourceAmount: Decimal(15, 2), sourceCurrency: String(5), targetCurrency: String(5)) returns Decimal(15, 2);
 
-  
     
+    action   submitForApproval(requestId: UUID)                                                                  returns String;
+    action   updateRequestStatus(requestId: UUID, status: String)                                                returns String;
+    action   createPurchaseOrder(requestId: UUID)                                                                returns String;
+
+    function getCounts()                                                                                         returns {
+        submitted : Integer;
+        approved  : Integer;
+        rejected  : Integer;
+        draft     : Integer;
+    };
+
+
 }
