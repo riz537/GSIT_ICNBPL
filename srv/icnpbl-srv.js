@@ -33,7 +33,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
     this.on('triggerPofetch', async req => {
      
       const data = await getpoSrv.run(SELECT.from('PurchaseOrderDocTracking').limit(5))
-      await INSERT.into('POTrackingLocal').entries(data);
+      await UPSERT.into('POTrackingLocal').entries(data);
       console.log("complete fetch:",JSON.stringify(data, null, 2));
       return "success";
     });
@@ -116,11 +116,20 @@ module.exports = class IcNpblService extends cds.ApplicationService {
 
       const draft = await SELECT.one.from(ICNPBRequest).columns('count(*) as CNT').where({ status: "DRAFT" });
 
+      const posted = await SELECT.one.from(ICNPBRequest).columns('count(*) as CNT').where({ status: "POSTED" });
+
+      const error = await SELECT.one.from(ICNPBRequest).columns('count(*) as CNT').where({ status: "ERROR" });
+
+      const pending_approval = await SELECT.one.from(ICNPBRequest).columns('count(*) as CNT').where({ status: "PENDING_APPROVAL" });
+
       return {
         submitted: submitted?.CNT || 0,
         approved: approved?.CNT || 0,
         rejected: rejected?.CNT || 0,
-        draft: draft?.CNT || 0
+        draft: draft?.CNT || 0,
+        posted: posted?.CNT || 0,
+        error: error?.CNT || 0,
+        pending_approval: pending_approval?.CNT || 0
       };
     });
 

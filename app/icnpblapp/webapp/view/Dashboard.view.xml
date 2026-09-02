@@ -29,6 +29,21 @@
                 <Text text="{dashboard>/draft}" class="kpiValue"/>
             </VBox>
 
+            <VBox class="kpiCard pendingCard">
+                <Title text="Posted"/>
+                <Text text="{dashboard>/posted}" class="kpiValue"/>
+            </VBox>
+
+            <VBox class="kpiCard pendingCard">
+                <Title text="error"/>
+                <Text text="{dashboard>/error}" class="kpiValue"/>
+            </VBox>
+
+            <VBox class="kpiCard pendingCard">
+                <Title text="pending_approval"/>
+                <Text text="{dashboard>/pending_approval}" class="kpiValue"/>
+            </VBox>
+
         </HBox>
 
         <!-- Filter Pills -->
@@ -78,11 +93,15 @@
                 </Column>
 
                 <Column>
-                    <Text text="billing Option"/>
+                    <Text text="Billing Option"/>
                 </Column>
 
                 <Column>
-                    <Text text="billingOption Date"/>
+                    <Text text="Billing Timing"/>
+                </Column>
+
+                <Column>
+                    <Text text="Billing Date"/>
                 </Column>
 
             </columns>
@@ -105,6 +124,8 @@
                         <Text text="{billingOption}"/>
 
                         <Text text="{billingTiming}"/>
+
+                        <Text text="{billAtDate}"/>
 
                     </cells>
 

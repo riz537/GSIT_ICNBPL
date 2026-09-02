@@ -29,17 +29,20 @@ service IcNpblService {
     action   createPurchaseOrder(requestId: UUID)                                                                returns String;
 
     function getCounts()                                                                                         returns {
-        submitted : Integer;
-        approved  : Integer;
-        rejected  : Integer;
-        draft     : Integer;
+        submitted        : Integer;
+        approved         : Integer;
+        rejected         : Integer;
+        draft            : Integer;
+        posted           : Integer;
+        error            : Integer;
+        pending_approval : Integer;
     };
 
-    // annotate IcNpblService.POTracking with @(UI.LineItem: 
-    // [{ $Type: 'UI.DataField', Value: PurchaseOrder},
-    // { $Type: 'UI.DataField', Value: CompanyCode},
-    // { $Type: 'UI.DataField', Value: CreationDate},
-    // { $Type: 'UI.DataFieldForAction', Action: 'IcNpblService.triggerPofetch',Label: 'fetch external data'}])
+// annotate IcNpblService.POTracking with @(UI.LineItem:
+// [{ $Type: 'UI.DataField', Value: PurchaseOrder},
+// { $Type: 'UI.DataField', Value: CompanyCode},
+// { $Type: 'UI.DataField', Value: CreationDate},
+// { $Type: 'UI.DataFieldForAction', Action: 'IcNpblService.triggerPofetch',Label: 'fetch external data'}])
 
 
 }

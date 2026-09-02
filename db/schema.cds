@@ -202,10 +202,10 @@ entity ICNPBAttachment : cuid {
 }
 
 entity POTrackingLocal {
-    key ID                : UUID;
-        PurchaseOrder     : String(20);
+
+    key PurchaseOrder     : String(20);
         PurchaseOrderType : String(20);
-        Vendor            : String(20);
+        CompanyCode            : String(20);
         CreationDate      : String(30);
 
 }
