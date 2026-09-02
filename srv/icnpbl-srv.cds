@@ -1,7 +1,7 @@
 using {icnpbl as db} from '../db/schema';
 using {masterdata_edmx as md} from './external/masterdata.edmx';
 using {API_PURCHASEORDER_PROCESS_SRV_edmx as PO} from './external/API_PURCHASEORDER_PROCESS_SRV.edmx';
-using {ZI_PO_DOC_TRACKING as POTrack} from './external/ZI_PO_DOC_TRACKING';
+
 
 service IcNpblService {
     entity ICNPBRequest             as projection on db.ICNPBRequest;
