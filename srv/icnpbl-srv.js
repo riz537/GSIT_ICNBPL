@@ -1,12 +1,14 @@
-const cds = require('@sap/cds')
+const cds = require('@sap/cds');
+const { SELECT } = require('@sap/cds/lib/ql/cds-ql');
 
 module.exports = class IcNpblService extends cds.ApplicationService {
   async init() {
 
-    const { A_PurchaseOrder, ICNPBAttachment, ICCustomer, ICVendor, ExchangeRateConversion, CostCenter, ICNPBRequest, Users, BillingTypes, BillingSubTypeDerivation, AffiliateMaster, MarkupDerivation } = cds.entities('IcNpblService')
+    const { A_PurchaseOrder, ICNPBAttachment, ICCustomer, ICVendor, ExchangeRateConversion, CostCenter, ICNPBRequest, Users, BillingTypes, BillingSubTypeDerivation, AffiliateMaster, MarkupDerivation, POTracking } = cds.entities('IcNpblService')
 
     const mdSrv = await cds.connect.to('masterdata_edmx');
     const poSrv = await cds.connect.to('API_PURCHASEORDER_PROCESS_SRV_edmx');
+    const getpoSrv = await cds.connect.to('ZI_PO_DOC_TRACKING');
 
     this.on('READ', [ICCustomer, ICVendor, CostCenter], async req => {
       console.log("Inside READ --> req.query below");
@@ -14,11 +16,28 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       return mdSrv.run(req.query);
     });
 
+    this.on('READ', [POTracking], async req => {
+      console.log("Inside READ --> req.query below");
+      console.log(JSON.stringify(req.query, null, 2));
+      const result = await getpoSrv.run(req.query);
+      await INSERT.into('POTrackingLocal').entries(result);
+      return result;
+    });
+
     this.on('CREATE', A_PurchaseOrder, async req => {
       console.log("Inside CREATE --> A_PurchaseOrder");
       console.log(JSON.stringify(req.query, null, 2));
       return poSrv.run(req.query);
     });
+
+    this.on('triggerPofetch', async req => {
+     
+      const data = await getpoSrv.run(SELECT.from('PurchaseOrderDocTracking').limit(5))
+      await INSERT.into('POTrackingLocal').entries(data);
+      console.log("complete fetch:",JSON.stringify(data, null, 2));
+      return "success";
+    });
+
 
 
     this.on('getExchangeRate', async req => {

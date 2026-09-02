@@ -181,7 +181,7 @@ entity ICNPBRequest : cuid, managed {
 
     approvalHistory               : Composition of many ICNPBApprovalHistory
                                         on approvalHistory.request = $self;
-    workflowInstanceId : String(100);
+    workflowInstanceId            : String(100);
 }
 
 /* =========================
@@ -199,6 +199,15 @@ entity ICNPBAttachment : cuid {
     ocrExtractedText : LargeString;
     uploadedBy       : String(255);
     uploadedAt       : Timestamp;
+}
+
+entity POTrackingLocal {
+    key ID                : UUID;
+        PurchaseOrder     : String(20);
+        PurchaseOrderType : String(20);
+        Vendor            : String(20);
+        CreationDate      : String(30);
+
 }
 
 /* =========================

@@ -43,6 +43,27 @@ sap.ui.define([
 
         },
 
+        onOpenPO: function () {
+
+            try {
+
+                const oModel = this.getView().getModel();
+                const oOperation = oModel.bindContext("/triggerPofetch(...)");
+
+                oOperation.execute().then(() => {
+                    const oContext = oOperation.getBoundContext();
+                    const sresult = oContext.getValue();
+                    console.log("success", sresult);
+
+                });
+
+                return "success";
+            } catch (error) {
+                console.error(error);
+            }
+
+        },
+
         async onSelBillingType(oEvent) {
             try {
                 const sBillingType = this.billingTypes[oEvent.getSource().getSelectedKey()];
