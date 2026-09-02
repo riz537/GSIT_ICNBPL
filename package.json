@@ -55,6 +55,12 @@
           "destination": "sap_process_automation_service"
         }
       },
+      "email_iflow": {
+        "kind": "rest",
+        "credentials": {
+          "destination": "SAC_Auditlog_cpi"
+        }
+      },
       "API_PURCHASEORDER_PROCESS_SRV_edmx": {
         "kind": "odata-v2",
         "model": "srv/external/API_PURCHASEORDER_PROCESS_SRV.edmx",
@@ -62,10 +68,10 @@
         "csrfInBatch": true,
         "credentials": {
           "destination": "S4HANA-ICNPB-POC",
-          "path": "/sap/opu/odata/sap/API_PURCHASEORDER_PROCESS_SRV"
+          "path": "/sap/opu/odata/sap/ZAPI_PO_SRV"
         }
       },
-      "ZI_PO_DOC_TRACKING": {
+      "ZI_PO_DOC_TRACKING_edmx": {
         "kind": "odata-v2",
         "model": "srv/external/ZI_PO_DOC_TRACKING.edmx",
         "csrf": true,

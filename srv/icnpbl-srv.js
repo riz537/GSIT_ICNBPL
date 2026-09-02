@@ -8,7 +8,11 @@ module.exports = class IcNpblService extends cds.ApplicationService {
 
     const mdSrv = await cds.connect.to('masterdata_edmx');
     const poSrv = await cds.connect.to('API_PURCHASEORDER_PROCESS_SRV_edmx');
-    const getpoSrv = await cds.connect.to('ZI_PO_DOC_TRACKING');
+    const emailSrv = await cds.connect.to("email_iflow");
+    const trackingSrv = await cds.connect.to("ZI_PO_DOC_TRACKING_edmx");
+
+
+
 
     this.on('READ', [ICCustomer, ICVendor, CostCenter], async req => {
       console.log("Inside READ --> req.query below");
@@ -210,27 +214,67 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         }
 
       }
+      //email trigger
+      const { submitterName, approverName } = await getUserNames(request);
+      try {
+        // Email to Submitter
+        await sendEmail(
+          request.createdBy,
+          `ICNPB Request Submitted - ${request.requestNumber}`,
+          buildSubmitEmail(request, submitterName)
+        );
+        // Email to Approver
+        await sendEmail(
+          request.createdBy,
+          `Approval Required - ${request.requestNumber}`,
+          buildApproverEmail(request, "Rizwan")//buildApproverEmail(request, approverName)
+        );
+      } catch (emailError) {
+        console.error("Email Error --->");
+        console.error(emailError);
+      }
 
 
     });
-
     this.on('updateRequestStatus', async req => {
       const { requestId, status } = req.data;
-      var count = await UPDATE(ICNPBRequest)
+      const count = await UPDATE(ICNPBRequest)
         .set({
           status: status
         })
         .where({
           ID: requestId
         });
-      //return `Request ${requestId} updated to ${status}`;
-      console.log("updateRequestStatus --->" + count);
-      if (count > 0) {
-        return "SUCCESS";
-      } else {
+
+      if (count === 0) {
         return "ERROR";
       }
 
+      const request = await SELECT.one
+        .from(ICNPBRequest)
+        .where({
+          ID: requestId
+        });
+      const { submitterName } = await getUserNames(request);
+      try {
+        if (status === "APPROVED") {
+          await sendEmail(
+            request.createdBy,
+            `ICNPB Request-${request.requestNumber} Approved`,
+            buildApprovalEmail(request, submitterName)
+          );
+        }
+        if (status === "REJECTED") {
+          await sendEmail(
+            request.createdBy,
+            `ICNPB Request-${request.requestNumber} Rejected`,
+            buildRejectionEmail(request, submitterName)
+          );
+        }
+      } catch (emailError) {
+        console.error(emailError);
+      }
+      return "SUCCESS";
     });
 
     this.on('createPurchaseOrder', async req => {
@@ -253,7 +297,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       const payload = {
         PurchaseOrder: "",
         CompanyCode: request.receivingAffiliateCompanyCode,
-        PurchaseOrderType: "NB",
+        PurchaseOrderType: "ZA",
         Supplier: affiliateBilling?.pVend,
         PurchasingOrganization: affiliateReceiving?.purchasingOrg,
         PurchasingGroup: "4IB",
@@ -296,6 +340,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       console.log(payload);
       console.log("Stringyfied payload");
       console.log(JSON.stringify(payload));
+      var poNumber;
       try {
         const result = await poSrv.send({
           method: 'POST',
@@ -305,7 +350,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         console.log("PO CREATION Response---->");
         console.log(result);
 
-        const poNumber = result.PurchaseOrder;
+        poNumber = result.PurchaseOrder;
         if (!poNumber) {
           throw new Error("PO Number not returned from S4");
         }
@@ -317,7 +362,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
           .where({
             ID: requestId
           });
-        return "SUCCESS";
+        //return "SUCCESS";
       } catch (error) {
         console.error("PO CREATION FAILED");
         console.error(error);
@@ -333,7 +378,217 @@ module.exports = class IcNpblService extends cds.ApplicationService {
           });
         return "ERROR";
       }
+      //trigger an SO call to get the SO number 
+      await new Promise(resolve =>
+        setTimeout(resolve, 5000)
+      );
+      try {
+        const soResult = await trackingSrv.send({
+          method: 'GET',
+          path:
+            `/SalesDebitMemoFlow?$filter=PurchaseOrder eq '${poNumber}'`
+        });
+
+        console.log("SO Response -->");
+        console.log(JSON.stringify(soResult));
+        await UPDATE(ICNPBRequest)
+          .set({
+            salesOrderNumber: soNumber,
+            status: 'POSTED'
+          })
+          .where({
+            ID: requestId
+          });
+      } catch (error) {
+        console.error("SO CREATION FAILED");
+        console.error(error);
+        await UPDATE(ICNPBRequest)
+          .set({
+            status: 'ERROR',
+            errorMessage:
+              error.message?.substring(0, 500) ||
+              'SO Creation Failed'
+          })
+          .where({
+            ID: requestId
+          });
+        return "ERROR";
+      }
+      //send email code below
+      const { submitterName } = await getUserNames(request);
+      try {
+        await sendEmail(
+          request.createdBy,
+          `Purchase Order Created - ${poNumber}`,
+          buildPOEmail(request, submitterName, poNumber)
+        );
+      } catch (emailError) {
+        console.log("emailErrorafter posting to sap");
+        console.error(emailError);
+      }
+      return "SUCCESS";
     });
+
+
+
+    //reusable function to trigger email
+    const sendEmail = async (to, subject, body) => {
+      const payload = [{
+        TO: to,
+        Subject: subject,
+        Body: body
+      }];
+
+      console.log("Email Payload --->");
+      console.log(JSON.stringify(payload, null, 2));
+
+      const response = await emailSrv.send({
+        method: "POST",
+        path: "/http/emailnotify",
+        data: payload
+      });
+      console.log("Email Response --->");
+      console.log(response);
+      return response;
+    };
+    function buildSubmitEmail(request, submitterName) {
+      return `
+            <p>Hi ${submitterName},</p>
+
+            <p>
+            Your ICNPB request has been submitted successfully and is currently pending approval.
+            </p>
+
+            <p>
+            <b>Request Number:</b> ${request.requestNumber}<br>
+            <b>Billing Type:</b> ${request.billingType}<br>
+            <b>Billing Sub Type:</b> ${request.billingSubType}<br>
+            <b>Description:</b> ${request.billingDescription}<br>
+            <b>Amount:</b> ${request.totalAmountCustomer} ${request.currencyCustomer}
+            </p>
+
+            <p>
+            You will receive another notification once the approval process is completed.
+            </p>
+
+            <p>
+            Thanks,<br>
+            ICNPB Support Team
+            </p>
+            `;
+    };
+    function buildApproverEmail(request, approverName) {
+      return `
+              <p>Hi ${approverName},</p>
+
+              <p>
+              An ICNPB request requires your review and approval.
+              </p>
+
+              <p>
+              <b>Request Number:</b> ${request.requestNumber}<br>
+              <b>Billing Type:</b> ${request.billingType}<br>
+              <b>Billing Sub Type:</b> ${request.billingSubType}<br>
+              <b>Description:</b> ${request.billingDescription}<br>
+              <b>Billing Affiliate:</b> ${request.billingAffiliateCompanyCode}<br>
+              <b>Receiving Affiliate:</b> ${request.receivingAffiliateCompanyCode}<br>
+              <b>Amount:</b> ${request.totalAmountCustomer} ${request.currencyCustomer}
+              </p>
+
+              <p>
+              Please review the request in My Inbox.
+              </p>
+
+              <p>
+              Thanks,<br>
+              ICNPB Support Team
+              </p>
+              `;
+    };
+    function buildApprovalEmail(request, submitterName) {
+      return `
+            <p>Hi ${submitterName},</p>
+
+            <p>
+            Your ICNPB request has been approved.
+            </p>
+
+            <p>
+            <b>Request Number:</b> ${request.requestNumber}<br>
+            <b>Status:</b> Approved
+            </p>
+
+            <p>
+            Thanks,<br>
+            ICNPB Support Team
+            </p>
+            `;
+    };
+    function buildRejectionEmail(request, submitterName) {
+      return `
+          <p>Hi ${submitterName},</p>
+
+          <p>
+          Your ICNPB request has been rejected.
+          </p>
+
+          <p>
+          <b>Request Number:</b> ${request.requestNumber}<br>
+          <b>Status:</b> Rejected
+          </p>
+
+          <p>
+          Please contact the approver for additional clarification.
+          </p>
+
+          <p>
+          Thanks,<br>
+          ICNPB Support Team
+          </p>
+          `;
+    };
+    function buildPOEmail(request, submitterName, poNumber) {
+      return `
+        <p>Hi ${submitterName},</p>
+
+        <p>
+        A Purchase Order has been created successfully for your ICNPB request.
+        </p>
+
+        <p>
+        <b>Request Number:</b> ${request.requestNumber}<br>
+        <b>Purchase Order:</b> ${poNumber}<br>
+        <b>Amount:</b> ${request.totalAmountCustomer} ${request.currencyCustomer}
+        </p>
+
+        <p>
+        Thanks,<br>
+        ICNPB Support Team
+        </p>
+    `;
+    };
+    const getUserNames = async (request) => {
+
+      const submitter = await SELECT.one
+        .from(Users)
+        .where({
+          emailId: request.createdBy
+        });
+
+      const approver = await SELECT.one
+        .from(Users)
+        .where({
+          emailId: request.receivingAffiliateContact
+        });
+
+      return {
+        submitterName:
+          submitter?.displayName || request.createdBy,
+
+        approverName:
+          approver?.displayName || request.receivingAffiliateContact
+      };
+    };
     return super.init()
   }
 }
