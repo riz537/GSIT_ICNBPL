@@ -160,6 +160,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         "definitionId": "us10.lly-sbx.icnpb.iCNPBProcess",
         "context": {
           "requestId": requestId,
+          "requestNo":request.requestNumber,
           "billingType": request.billingType,
           "billingOption": request.billingOption,
           "billingSubType": request.billingSubType,
