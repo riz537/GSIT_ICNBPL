@@ -1,0 +1,21 @@
+<core:FragmentDefinition xmlns:core="sap.ui.core"
+    xmlns="sap.m">
+    <Dialog title="Select Cost Element" contentWidth="35%">
+        <Table items="{viewModel>/aCostElements}" >
+            <columns>
+                <Column >
+                    <Text text="Cost Element"></Text>
+                </Column>
+            </columns>
+            <items>
+                <ColumnListItem press="onPressCEItem" type="Active">
+                    <Text text="{viewModel>costElement}"></Text>
+                </ColumnListItem>
+            </items>
+        </Table>
+        <endButton>
+            <Button text="Close" type="Reject" press="onCloseCEDialog"></Button>
+        </endButton>
+    </Dialog>
+
+</core:FragmentDefinition>

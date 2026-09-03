@@ -15,7 +15,7 @@ service IcNpblService {
     entity ICCustomer               as projection on md.ICCustomer;
     entity ICVendor                 as projection on md.ICVendor;
     entity A_PurchaseOrder          as projection on PO.A_PurchaseOrder;
-    entity POTracking               as projection on POTrack.PurchaseOrderDocTracking;
+    //entity POTracking               as projection on POTrack.PurchaseOrderDocTracking;
 
     action   triggerPofetch()                                                                                    returns String;
 

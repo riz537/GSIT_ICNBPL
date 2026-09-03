@@ -35,7 +35,7 @@
                     <Label text="Billing Sub-Type" required="true" />
                     <ComboBox items="{viewModel>/value}" selectionChange="onSelBillingSubType" placeholder="— Select billing sub-type —" selectedKey="{requestModel>/billingSubType}">
                         <items>
-                            <core:Item key="{viewModel>sapMaterial}" text="{viewModel>billingSubType}" />
+                            <core:Item key="{viewModel>billingSubType}" text="{viewModel>billingSubType}" />
                         </items>
                     </ComboBox>
                     <Label text="Billing Description" />
@@ -72,7 +72,7 @@
                         </VBox>
                         <VBox class="sapUiSmallMarginTop">
                             <Label text="Cost Element" required="true"></Label>
-                            <Input id="oIpBillCE" value="{requestModel>/billingAffiliateCostElement}"></Input>
+                            <Input id="oIpBillCE" value="{requestModel>/billingAffiliateCostElement}" showValueHelp="false" valueHelpRequest="onPressCEF4Help"></Input>
                         </VBox>
 
                         <VBox class="sapUiTinyMarginTop">
@@ -104,7 +104,7 @@
                         </VBox>
                         <VBox class="sapUiSmallMarginTop">
                             <Label text="Cost Element" required="true"></Label>
-                            <Input id="oIpRecCE" value="{requestModel>/receivingAffiliateCostElement}"></Input>
+                            <Input id="oIpRecCE" value="{requestModel>/receivingAffiliateCostElement}" showValueHelp="false" valueHelpRequest="onPressCEF4Help"></Input>
                         </VBox>
 
                         <VBox class="sapUiTinyMarginTop">

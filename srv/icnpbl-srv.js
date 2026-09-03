@@ -4,7 +4,7 @@ const { SELECT } = require('@sap/cds/lib/ql/cds-ql');
 module.exports = class IcNpblService extends cds.ApplicationService {
   async init() {
 
-    const { A_PurchaseOrder, ICNPBAttachment, ICCustomer, ICVendor, ExchangeRateConversion, CostCenter, ICNPBRequest, Users, BillingTypes, BillingSubTypeDerivation, AffiliateMaster, MarkupDerivation, POTracking } = cds.entities('IcNpblService')
+    const { A_PurchaseOrder, ICNPBAttachment, ICCustomer, ICVendor, ExchangeRateConversion, CostCenter, ICNPBRequest, Users, BillingTypes, BillingSubTypeDerivation, AffiliateMaster, MarkupDerivation } = cds.entities('IcNpblService')
 
     const mdSrv = await cds.connect.to('masterdata_edmx');
     const poSrv = await cds.connect.to('API_PURCHASEORDER_PROCESS_SRV_edmx');
@@ -20,13 +20,13 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       return mdSrv.run(req.query);
     });
 
-    this.on('READ', [POTracking], async req => {
-      console.log("Inside READ --> req.query below");
-      console.log(JSON.stringify(req.query, null, 2));
-      const result = await getpoSrv.run(req.query);
-      await INSERT.into('POTrackingLocal').entries(result);
-      return result;
-    });
+    // this.on('READ', [POTracking], async req => {
+    //   console.log("Inside READ --> req.query below");
+    //   console.log(JSON.stringify(req.query, null, 2));
+    //   const result = await getpoSrv.run(req.query);
+    //   await INSERT.into('POTrackingLocal').entries(result);
+    //   return result;
+    // });
 
     this.on('CREATE', A_PurchaseOrder, async req => {
       console.log("Inside CREATE --> A_PurchaseOrder");
@@ -34,13 +34,13 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       return poSrv.run(req.query);
     });
 
-    this.on('triggerPofetch', async req => {
-     
-      const data = await getpoSrv.run(SELECT.from('PurchaseOrderDocTracking').limit(5))
-      await UPSERT.into('POTrackingLocal').entries(data);
-      console.log("complete fetch:",JSON.stringify(data, null, 2));
-      return "success";
-    });
+    // this.on('triggerPofetch', async req => {
+
+    //   const data = await getpoSrv.run(SELECT.from('PurchaseOrderDocTracking').limit(5))
+    //   await UPSERT.into('POTrackingLocal').entries(data);
+    //   console.log("complete fetch:",JSON.stringify(data, null, 2));
+    //   return "success";
+    // });
 
 
 
@@ -64,10 +64,14 @@ module.exports = class IcNpblService extends cds.ApplicationService {
     });
 
     this.before('CREATE', ICNPBRequest, async req => {
-      req.data.requestNumber =
-        Math.floor(100000000000 + Math.random() * 900000000000)
-          .toString();
-
+      const year = new Date().getFullYear();
+      const lastRequest = await SELECT.one.from(ICNPBRequest).columns('requestNumber').orderBy({ createdAt: 'desc' });
+      let nextNumber = 1;
+      if (lastRequest?.requestNumber && lastRequest.requestNumber.startsWith(`ICNBP-${year}-`)) {
+        const currentNumber =  parseInt( lastRequest.requestNumber.split('-')[2]);
+        nextNumber = currentNumber + 1;
+      }
+      req.data.requestNumber =   `ICNBP-${year}-${String(nextNumber).padStart(6, '0')}`;
       req.data.status = 'DRAFT';
     });
     this.before('CREATE', ICNPBAttachment, async req => {
@@ -283,7 +287,10 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       if (!request) {
         req.error(404, 'Request not found');
       }
-
+      const billingSubTypeInfo = await SELECT.one.from(BillingSubTypeDerivation)
+        .where({
+          billingSubType: request.billingSubType
+        });
       const affiliateBilling = await SELECT.one.from(AffiliateMaster)
         .where({
           companyCode: request.billingAffiliateCompanyCode
@@ -293,7 +300,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         .where({
           companyCode: request.receivingAffiliateCompanyCode
         });
-
+      const sapMaterial = billingSubTypeInfo.sapMaterial;
       const payload = {
         PurchaseOrder: "",
         CompanyCode: request.receivingAffiliateCompanyCode,
@@ -311,7 +318,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
           TaxCode: "NA",
           PurchaseOrderItemText: request.billingDescription,
           Plant: affiliateReceiving?.plant,
-          SupplierMaterialNumber: request.billingSubType,
+          SupplierMaterialNumber: sapMaterial,
           OrderQuantity: "1.000",
           PurchaseOrderQuantityUnit: "SU",
           OrderPriceUnit: "SU",
@@ -320,7 +327,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
           DocumentCurrency: request.currencyCustomer,
           NetPriceAmount: request.totalAmountCustomer,
           NetPriceQuantity: "1",
-          Material: request.billingSubType,
+          Material: sapMaterial,
 
           to_AccountAssignment: [{
             PurchaseOrder: "",
@@ -340,7 +347,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       console.log(payload);
       console.log("Stringyfied payload");
       console.log(JSON.stringify(payload));
-      var poNumber;
+      var poNumber, soNumber;
       try {
         const result = await poSrv.send({
           method: 'POST',
@@ -379,9 +386,12 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         return "ERROR";
       }
       //trigger an SO call to get the SO number 
+      console.log("before set time out -->");
+
       await new Promise(resolve =>
         setTimeout(resolve, 5000)
       );
+      console.log("after time out and before SO Trigger Response -->");
       try {
         const soResult = await trackingSrv.send({
           method: 'GET',
@@ -391,9 +401,10 @@ module.exports = class IcNpblService extends cds.ApplicationService {
 
         console.log("SO Response -->");
         console.log(JSON.stringify(soResult));
+        soNumber = soResult?.[0]?.SalesOrder;
         await UPDATE(ICNPBRequest)
           .set({
-            salesOrderNumber: soNumber,
+            salesOrderNumber: soResult?.[0]?.SalesOrder,
             status: 'POSTED'
           })
           .where({

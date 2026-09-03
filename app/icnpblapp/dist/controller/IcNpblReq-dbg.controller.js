@@ -43,6 +43,27 @@ sap.ui.define([
 
         },
 
+        onOpenPO: function () {
+
+            try {
+
+                const oModel = this.getView().getModel();
+                const oOperation = oModel.bindContext("/triggerPofetch(...)");
+
+                oOperation.execute().then(() => {
+                    const oContext = oOperation.getBoundContext();
+                    const sresult = oContext.getValue();
+                    console.log("success", sresult);
+
+                });
+
+                return "success";
+            } catch (error) {
+                console.error(error);
+            }
+
+        },
+
         async onSelBillingType(oEvent) {
             try {
                 const sBillingType = this.billingTypes[oEvent.getSource().getSelectedKey()];
@@ -58,10 +79,25 @@ sap.ui.define([
             }
         },
         onSelBillingSubType: function (oEvent) {
+            this.byId("oIpBillCE").setShowValueHelp(false); this.byId("oIpRecCE").setShowValueHelp(false);
+            this.byId("oIpBillCE").setValue(""); this.byId("oIpRecCE").setValue("");
+
             var oSelItem = oEvent.getSource().getSelectedItem();
-            var costElement = oSelItem.getBindingContext("viewModel").getObject().costElement;
-            this.byId("oIpBillCE").setValue(costElement);
-            this.byId("oIpRecCE").setValue(costElement);
+            var object = oSelItem.getBindingContext("viewModel").getObject();
+            if (object.ceSelection === "FIXED") {
+                this.byId("oIpBillCE").setValue(object.costElement);
+                this.byId("oIpRecCE").setValue(object.costElement);
+            } else if (object.ceSelection === "USER_SELECT") {
+                this.byId("oIpBillCE").setShowValueHelp(true); this.byId("oIpRecCE").setShowValueHelp(true);
+                var aCEs = object.allowedCostElements.split("|");
+                var aCEObjects = aCEs.map(function (value) {
+                    return {
+                        costElement: value
+                    }
+                });
+                this.viewModel.setProperty("/aCostElements", aCEObjects);
+            }
+
         },
         getCostCenterDetails: async function (sCostCenter) {
             try {
@@ -125,6 +161,22 @@ sap.ui.define([
             }
             sap.ui.core.BusyIndicator.hide();
 
+        },
+        onPressCEF4Help: function (oEvent) {
+            this.ceInput = oEvent.getSource();
+            if (!this.ceDialog) {
+                this.ceDialog = sap.ui.xmlfragment(this.getView().getId(), "com.ui5.lly.icnpbl.icnpblapp.Fragments.CEF4Help", this);
+                this.getView().addDependent(this.ceDialog);
+            }
+            this.ceDialog.open();
+        },
+        onCloseCEDialog: function () {
+            this.ceDialog.close();
+        },
+        onPressCEItem:function(oEvent){
+            var ce = oEvent.getSource().getBindingContext("viewModel").getObject("costElement");
+            this.ceInput.setValue(ce);
+            this.ceDialog.close();
         },
         onPressCCF4Help: function (oEvent) {
             console.log("Data is coming from S4HANA-ICNPB-POC");
@@ -415,7 +467,7 @@ sap.ui.define([
                 sap.m.MessageBox.error("Submission Failed");
             }
         }
-       
+
 
 
     });

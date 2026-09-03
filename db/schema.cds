@@ -97,7 +97,7 @@ type SAPEnablementStatus     : String enum {
 
 entity ICNPBRequest : cuid, managed {
 
-    requestNumber                 : String(12);
+    requestNumber                 : String(20);
 
     billingType                   : BillingType;
     billingOption                 : BillingOption;
