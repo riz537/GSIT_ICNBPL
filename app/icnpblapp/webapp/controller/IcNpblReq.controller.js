@@ -464,8 +464,9 @@ sap.ui.define([
                 sap.m.MessageBox.success("Submitted for Approval");
                 sap.ui.core.BusyIndicator.hide();
             } catch (oError) {
+                sap.ui.core.BusyIndicator.hide();
                 console.error(oError);
-                sap.m.MessageBox.error("Submission Failed");
+                //sap.m.MessageBox.error("Submission Failed");
             }
         }
 

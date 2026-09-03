@@ -68,10 +68,10 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       const lastRequest = await SELECT.one.from(ICNPBRequest).columns('requestNumber').orderBy({ createdAt: 'desc' });
       let nextNumber = 1;
       if (lastRequest?.requestNumber && lastRequest.requestNumber.startsWith(`ICNBP-${year}-`)) {
-        const currentNumber =  parseInt( lastRequest.requestNumber.split('-')[2]);
+        const currentNumber = parseInt(lastRequest.requestNumber.split('-')[2]);
         nextNumber = currentNumber + 1;
       }
-      req.data.requestNumber =   `ICNBP-${year}-${String(nextNumber).padStart(6, '0')}`;
+      req.data.requestNumber = `ICNBP-${year}-${String(nextNumber).padStart(6, '0')}`;
       req.data.status = 'DRAFT';
     });
     this.before('CREATE', ICNPBAttachment, async req => {
@@ -146,6 +146,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       console.log(req.data);
       console.log("user information ---->");
       console.log(JSON.stringify(req.user));
+
       const { requestId } = req.data;
       const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
       const attachment = await SELECT.one.from(ICNPBAttachment).where({ request_ID: requestId });
@@ -154,13 +155,39 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       if (!request) {
         req.error(404, 'Request not found');
       }
+      //is user exist
+      const loggedInUser = req.user.id;
+      const user = await SELECT.one.from(Users).where({ emailId: loggedInUser });
+      if (!user) {
+        req.error(
+          403,
+          "You are not authorized to raise an ICNPB request."
+        );
+      }
+      const billingSubTypeInfo = await SELECT.one
+        .from(BillingSubTypeDerivation)
+        .where({
+          billingSubType: request.billingSubType
+        });
+
+      const threshold = Number(billingSubTypeInfo.threshold || 0);
+
+      const requestAmount =
+        Number(request.totalAmountLocal || 0);
+
+      if (requestAmount <= threshold) {
+        req.error(
+          400,
+          `IC NPB Billing requests can only be submitted when the request amount exceeds the configured threshold amount of ${threshold}.`
+        );
+      }
       // BPA payload
 
       const payload = {
         "definitionId": "us10.lly-sbx.icnpb.iCNPBProcess",
         "context": {
           "requestId": requestId,
-          "requestNo":request.requestNumber,
+          "requestNumber": request.requestNumber,
           "billingType": request.billingType,
           "billingOption": request.billingOption,
           "billingSubType": request.billingSubType,
