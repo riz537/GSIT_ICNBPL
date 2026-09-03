@@ -10,7 +10,6 @@
             <Toolbar >
                 <Title text="{i18n>title}"></Title>
                 <ToolbarSpacer ></ToolbarSpacer>
-                <Button text="Navigate to Dashboard" icon="sap-icon://open-command-field" type="Emphasized" press=".onOpenDashboard"/>
             </Toolbar>
         </customHeader>
         <content>

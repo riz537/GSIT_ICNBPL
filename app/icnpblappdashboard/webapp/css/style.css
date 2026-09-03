@@ -1,0 +1,43 @@
+/* Enter your custom styles here */.kpiCard{
+    width:220px;
+    margin-right:1rem;
+    padding:1rem;
+    border-radius:.75rem;
+    background:#f5f6f7;
+}
+
+
+
+.kpiValue{
+    font-size:2rem;
+    font-weight:bold;
+}
+/* Enter your custom styles here */
+
+.submittedCard {
+    background: #E3F2FD;   /* Light Blue */
+}
+
+.approvedCard {
+    background: #E8F5E9;   /* Light Green */
+}
+
+.rejectedCard {
+    background: #FFEBEE;   /* Light Red */
+}
+
+.pendingCard {
+    background: #FFF8E1;   /* Light Amber */
+}
+
+.postedCard {
+    background: #E8F5FF;   /* Sky Blue */
+}
+
+.errorCard {
+    background: #FCE4EC;   /* Light Pink */
+}
+
+.pendingApprovalCard {
+    background: #F3E5F5;   /* Light Purple */
+}

@@ -1,0 +1,162 @@
+<mvc:View controllerName="com.ui5.lly.icnpbl.icnpblappdashboard.controller.Dashboard"
+    displayBlock="true"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m">
+    <Page title="IC NPB Operations">
+
+    <content>
+
+        <!-- KPI Section -->
+        <HBox class="sapUiMediumMarginBottom">
+
+            <VBox class="kpiCard submittedCard">
+                <Title text="Submitted"/>
+                <Text text="{dashboard>/submitted}" class="kpiValue"/>
+            </VBox>
+
+            <VBox class="kpiCard approvedCard">
+                <Title text="Approved"/>
+                <Text text="{dashboard>/approved}" class="kpiValue"/>
+            </VBox>
+
+            <VBox class="kpiCard rejectedCard">
+                <Title text="Rejected"/>
+                <Text text="{dashboard>/rejected}" class="kpiValue"/>
+            </VBox>
+
+            <VBox class="kpiCard pendingCard">
+                <Title text="Pending"/>
+                <Text text="{dashboard>/draft}" class="kpiValue"/>
+            </VBox>
+
+            <VBox class="kpiCard postedCard">
+                <Title text="Posted"/>
+                <Text text="{dashboard>/posted}" class="kpiValue"/>
+            </VBox>
+
+            <VBox class="kpiCard errorCard">
+                <Title text="error"/>
+                <Text text="{dashboard>/error}" class="kpiValue"/>
+            </VBox>
+
+            <VBox class="kpiCard pendingApprovalCard">
+                <Title text="pending_approval"/>
+                <Text text="{dashboard>/pending_approval}" class="kpiValue"/>
+            </VBox>
+
+        </HBox>
+
+        <!-- Filter Pills -->
+        <HBox class="sapUiSmallMarginBottom">
+
+            <Button
+                text="All"
+                type="Emphasized"
+                press=".onAllPress"/>
+
+        </HBox>
+
+        <!-- Search -->
+        <SearchField
+            width="100%"
+            search=".onSearch"/>
+
+        <!-- Request Table -->
+        <Table
+            id="requestTable"
+            items="{/ICNPBRequest}">
+
+            <columns>
+
+                <Column>
+                    <Text text="Request"/>
+                </Column>
+
+                <Column>
+                    <Text text="Status"/>
+                    
+                </Column>
+
+
+
+                <Column>
+                    <Text text="Sales Order"/>
+                </Column>
+
+                
+                <Column>
+                    <Text text="Purchase Order"/>
+                </Column>
+
+                
+                <Column>
+                    <Text text="Voucher Number"/>
+                </Column>
+
+                <Column>
+                    <Text text="Billing Option"/>
+                </Column>
+
+                <Column>
+                    <Text text="Billing Timing"/>
+                </Column>
+
+                <Column>
+                    <Text text="Billing Type"/>
+                </Column>
+
+                <Column>
+                    <Text text="Billing Date"/>
+                </Column>
+
+            </columns>
+
+            <items>
+
+                <ColumnListItem>
+
+                    <cells>
+
+                        <Text text="{requestNumber}"/>
+
+                        <ObjectStatus
+                            text="{status}"
+                            state="{= ${status} === 'APPROVED' ? 'Success' :
+                                ${status} === 'DRAFT' ? 'Warning' : 'Information'}"/>
+
+                        <Text text="{salesOrderNumber}"/>
+
+                        <Text text="{purchaseOrderNumber}"/>
+
+                        <Text text="{fiJournalVoucherNumber}"/>
+
+                        <Text text="{billingOption}"/>
+
+                        <Text text="{billingTiming}"/>
+
+                         <Text text="{billingType}"/>
+
+                        <Text text="{billAtDate}"/>
+
+                    </cells>
+
+                </ColumnListItem>
+
+            </items>
+
+            <headerToolbar>
+                <OverflowToolbar>
+                    <ToolbarSpacer />
+                    <ObjectStatus
+                        text="Total Items: {view>/totalCount}"
+                        state="Information" />
+                </OverflowToolbar>
+            </headerToolbar>
+
+        </Table>
+
+    </content>
+
+</Page>
+</mvc:View>
+

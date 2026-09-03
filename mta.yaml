@@ -51,14 +51,29 @@ modules:
   build-parameters:
     build-result: app/
     requires:
-    - artifacts:
-      - comui5llyicnpblicnpblapp.zip
-      name: GSIT_ICNPBLicnpblapp
-      target-path: app/
+      - name: GSIT_ICNPBLicnpblapp
+        artifacts:
+          - comui5llyicnpblicnpblapp.zip
+        target-path: app/
+
+      - name: GSIT_ICNPBLicnpblappdashboard
+        artifacts:
+          - comui5llyicnpblicnpblappdashboard.zip
+        target-path: app/
     
 - name: GSIT_ICNPBLicnpblapp
   type: html5
   path: app/icnpblapp
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+- name: GSIT_ICNPBLicnpblappdashboard
+  type: html5
+  path: app/icnpblappdashboard
   build-parameters:
     build-result: dist
     builder: custom
