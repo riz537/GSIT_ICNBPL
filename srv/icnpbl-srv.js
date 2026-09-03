@@ -229,9 +229,9 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         );
         // Email to Approver
         await sendEmail(
-          request.createdBy,
+          request.receivingAffiliateContact,
           `Approval Required - ${request.requestNumber}`,
-          buildApproverEmail(request, "Rizwan")//buildApproverEmail(request, approverName)
+          buildApproverEmail(request, approverName)
         );
       } catch (emailError) {
         console.error("Email Error --->");

@@ -1,0 +1,37 @@
+<core:FragmentDefinition xmlns:core="sap.ui.core"
+    xmlns="sap.m">
+    <Dialog title="Select Contact" contentWidth="70%">
+        <Table items="{/Users}" >
+            <columns>
+                <Column >
+                    <Text text="User ID"></Text>
+                </Column>
+                <Column >
+                    <Text text="Name"></Text>
+                </Column>
+                <Column width="30%">
+                    <Text text="Email ID"></Text>
+                </Column>
+                <Column >
+                    <Text text="Is Approver"></Text>
+                </Column>
+                <Column >
+                    <Text text="Zone"></Text>
+                </Column>
+            </columns>
+            <items>
+                <ColumnListItem press="onPressContactItem" type="Active">
+                    <Text text="{userId}"></Text>
+                    <Text text="{displayName}"></Text>
+                    <Text text="{emailId}"></Text>
+                    <Text text="{isApprover}"></Text>
+                    <Text text="{zone}"></Text>
+                </ColumnListItem>
+            </items>
+        </Table>
+        <endButton>
+            <Button text="Close" type="Reject" press="onCloseContactsF4"></Button>
+        </endButton>
+    </Dialog>
+
+</core:FragmentDefinition>

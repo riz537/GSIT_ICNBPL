@@ -238,7 +238,7 @@ entity Users {
         financeRequestor : String;
         isActive         : String;
         isApprover       : String;
-        zone             : Integer;
+     key   zone          : String;
 }
 
 entity BillingTypes {

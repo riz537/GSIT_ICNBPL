@@ -272,18 +272,18 @@ sap.ui.define([
         onPressContactF4: function (oEvent) {
             this.contactInput = oEvent.getSource();
             if (!this.contactDialog) {
-                this.contactDialog = sap.ui.xmlfragment(this.getView().getId(), "com.ui5.lly.icnpbl.icnpblapp.Fragments.ContactF4", this);
+                this.contactDialog = sap.ui.xmlfragment(this.getView().getId(), "com.ui5.lly.icnpbl.icnpblapp.Fragments.ContactsF4", this);
                 this.getView().addDependent(this.contactDialog);
             }
             this.contactDialog.open();
-            if (this.contactInput.getId().includes("2")) {
-                this.contactDialog.setTitle("Select Receiving Contact");
+            if (this.contactInput.getId().includes("oIpRecContact")) {
+                this.contactDialog.setTitle("Receiving Contact");
             } else {
                 this.contactDialog.setTitle("Billing Contact");
             }
-            this.bindContactTable(this.contactInput.getId());
+            //this.bindContactTable(this.contactInput.getId());
         },
-        onCloseContactF4: function () {
+        onCloseContactsF4: function () {
             this.contactDialog.close();
         },
         bindContactTable: function (contactInputID) {
@@ -377,12 +377,13 @@ sap.ui.define([
             }
         },
         onPressContactItem: function (oEvent) {
-            if (this.contactInput.getId().includes("oIpRecContact")) {
-                this.contactInput.setValue(oEvent.getSource().getBindingContext().getObject().CustomerName);
-            } else {
-                this.contactInput.setValue(oEvent.getSource().getBindingContext().getObject().SupplierName);
-            }
-            this.contactDialog.close();
+            this.contactInput.setValue(oEvent.getSource().getBindingContext().getObject().emailId);
+            // if (this.contactInput.getId().includes("oIpRecContact")) {
+            //     this.contactInput.setValue(oEvent.getSource().getBindingContext().getObject().CustomerName);
+            // } else {
+            //     this.contactInput.setValue(oEvent.getSource().getBindingContext().getObject().SupplierName);
+            // }
+             this.contactDialog.close();
         },
         onFileSelect: function (oEvent) {
             this._selectedFile = oEvent.getParameter("files")[0];

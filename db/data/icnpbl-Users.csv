@@ -1,7 +1,7 @@
 userId,displayName,emailId,isTaxSubmitter,financeRequestor,isActive,isApprover,zone
-C287226,Patrick O'Mahony,o_mahony_patrick1@lilly.com,No,No,Yes,,
+C287226,Patrick O'Mahony,o_mahony_patrick1@lilly.com,No,No,Yes,,NA
 L075216,Ethan Allain,ethan.allain@lilly.com,No,No,Yes,Yes,3
-L046189,Adam Keating,adam.keating@lilly.com,No,No,Yes,Yes,4
+L046189,Adam Keating ,adam.keating@lilly.com,No,No,Yes,Yes,4
 C268274,Eleanor O'Leary,turnbull_eleanor@lilly.com,No,No,Yes,Yes,3
 L111621,Gandhi Kesiboyina,gandhi.kesiboyina@lilly.com,No,No,Yes,Yes,1
 C266501,Meredith Rowan,rowan_meredith@lilly.com,No,No,Yes,Yes,1
@@ -9,8 +9,11 @@ L102275,Joey Engelhardt,joey.engelhardt@lilly.com,Yes,No,Yes,Yes,2
 L011794,Narendra Singh,narendra.singh@network.lilly.com,No,No,Yes,Yes,2
 L148830,Rizwan Shaik,shaikrizwan.pasha@network.lilly.com,No,No,Yes,Yes,2
 L089003,Alpna Sinha,alpna.sinha@network.lilly.com,Yes,No,Yes,Yes,4
-L029444,Sabarirajan,sabarirajan@network.lilly.com,No,No,Yes,,
+L029444,Sabarirajan,sabarirajan@network.lilly.com,No,No,Yes,,NA
 L037446,Katie O' Donovan,o_donovan_katie@lilly.com,No,No,Yes,Yes,3
 L018249,Paul Horgan,horgan_paul@lilly.com,No,No,Yes,Yes,4
 C081898,Aoife Maguire,maguire_aoife@lilly.com,No,No,Yes,Yes,4
-C264151,Aoife Dolan,dolan_aoife@lilly.com,No,No,Yes,,
+C264151,Aoife Dolan,dolan_aoife@lilly.com,No,No,Yes,,NA
+L111621,Gandhi Kesiboyina,gandhi.kesiboyina@lilly.com,No,No,Yes,Yes,2
+L111621,Gandhi Kesiboyina,gandhi.kesiboyina@lilly.com,No,No,Yes,Yes,3
+L111621,Gandhi Kesiboyina,gandhi.kesiboyina@lilly.com,No,No,Yes,Yes,4
