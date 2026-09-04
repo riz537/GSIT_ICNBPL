@@ -63,6 +63,16 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       return result[0].ConvertedAmount;
     });
 
+    this.on('validateSubmitter', async req => {
+      const user = await SELECT.one.from(Users).where({ emailId: req.user.id });
+      if (!user) {
+        return req.reject(
+          403,
+          "You are not authorized to raise an ICNPB request."
+        );
+      }
+      return "SUCCESS";
+    });
     this.before('CREATE', ICNPBRequest, async req => {
       const year = new Date().getFullYear();
       const lastRequest = await SELECT.one.from(ICNPBRequest).columns('requestNumber').orderBy({ createdAt: 'desc' });
@@ -153,17 +163,9 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       console.log("attachment");
       console.log(attachment);
       if (!request) {
-        req.error(404, 'Request not found');
+        req.reject(404, 'Request not found');
       }
-      //is user exist
-      const loggedInUser = req.user.id;
-      const user = await SELECT.one.from(Users).where({ emailId: loggedInUser });
-      if (!user) {
-        req.error(
-          403,
-          "You are not authorized to raise an ICNPB request."
-        );
-      }
+
       const billingSubTypeInfo = await SELECT.one
         .from(BillingSubTypeDerivation)
         .where({
@@ -176,9 +178,9 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         Number(request.totalAmountLocal || 0);
 
       if (requestAmount <= threshold) {
-        req.error(
+        req.reject(
           400,
-          `IC NPB Billing requests can only be submitted when the request amount exceeds the configured threshold amount of ${threshold}.`
+          `IC NPB Billing request amount can not be less than the threshold amount - ${threshold}.`
         );
       }
       // BPA payload

@@ -27,6 +27,7 @@ service IcNpblService {
     action   submitForApproval(requestId: UUID)                                                                  returns String;
     action   updateRequestStatus(requestId: UUID, status: String)                                                returns String;
     action   createPurchaseOrder(requestId: UUID)                                                                returns String;
+    action validateSubmitter() returns String;
 
     function getCounts()                                                                                         returns {
         submitted        : Integer;
@@ -37,7 +38,7 @@ service IcNpblService {
         error            : Integer;
         pending_approval : Integer;
     };
-    
+
 
 // annotate IcNpblService.POTracking with @(UI.LineItem:
 // [{ $Type: 'UI.DataField', Value: PurchaseOrder},

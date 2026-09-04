@@ -173,7 +173,7 @@ sap.ui.define([
         onCloseCEDialog: function () {
             this.ceDialog.close();
         },
-        onPressCEItem:function(oEvent){
+        onPressCEItem: function (oEvent) {
             var ce = oEvent.getSource().getBindingContext("viewModel").getObject("costElement");
             this.ceInput.setValue(ce);
             this.ceDialog.close();
@@ -383,7 +383,7 @@ sap.ui.define([
             // } else {
             //     this.contactInput.setValue(oEvent.getSource().getBindingContext().getObject().SupplierName);
             // }
-             this.contactDialog.close();
+            this.contactDialog.close();
         },
         onFileSelect: function (oEvent) {
             this._selectedFile = oEvent.getParameter("files")[0];
@@ -435,6 +435,8 @@ sap.ui.define([
                 payload.billAtDate = this.byId("oDPBillingDate").getDateValue()?.toISOString().split("T")[0];
                 payload.billingTiming = "LATER";
             }
+            const oValidation =  oModel.bindContext("/validateSubmitter(...)");
+            await oValidation.execute();
             const oListBinding = oModel.bindList("/ICNPBRequest");
             const oContext = oListBinding.create(payload);
             await oContext.created();
@@ -465,8 +467,8 @@ sap.ui.define([
                 sap.ui.core.BusyIndicator.hide();
             } catch (oError) {
                 sap.ui.core.BusyIndicator.hide();
-                console.error(oError);
-                //sap.m.MessageBox.error("Submission Failed");
+                console.log(oError.message);
+                sap.m.MessageBox.error(oError.message);
             }
         }
 
