@@ -174,8 +174,8 @@ module.exports = class IcNpblService extends cds.ApplicationService {
 
       const threshold = Number(billingSubTypeInfo.threshold || 0);
 
-      const requestAmount =
-        Number(request.totalAmountLocal || 0);
+      const requestAmount = Number(request.totalAmountLocal || 0);
+       
 
       if (requestAmount <= threshold) {
         req.reject(
@@ -183,11 +183,17 @@ module.exports = class IcNpblService extends cds.ApplicationService {
           `IC NPB Billing request amount can not be less than the threshold amount - ${threshold}.`
         );
       }
-      // BPA payload
 
+      const submitterUser = await SELECT.one.from(Users).where({ emailId: request.createdBy });
+      const autoApprove =  submitterUser?.taxSubmitter === "Yes" &&  isEOMMinus5ToEOM();
+      console.log("Auto Approve Flag --->", autoApprove);
+
+
+      // BPA payload
       const payload = {
         "definitionId": "us10.lly-sbx.icnpb.iCNPBProcess",
         "context": {
+          "autoApprove":autoApprove,
           "requestId": requestId,
           "requestNumber": request.requestNumber,
           "billingType": request.billingType,
@@ -491,6 +497,22 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       console.log("Email Response --->");
       console.log(response);
       return response;
+    };
+    const isEOMMinus5ToEOM = () => {
+      const today = new Date();
+      const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+      const eomMinus5 =
+        new Date(lastDayOfMonth);
+
+      eomMinus5.setDate(
+        lastDayOfMonth.getDate() - 5
+      );
+
+      return (
+        today >= eomMinus5 &&
+        today <= lastDayOfMonth
+      );
     };
     function buildSubmitEmail(request, submitterName) {
       return `
