@@ -8,39 +8,40 @@
 
         <!-- KPI Section -->
         <HBox class="sapUiMediumMarginBottom">
+        
 
-            <VBox class="kpiCard submittedCard">
+            <VBox id="submittedCard" class="kpiCard submittedCard" >
                 <Title text="Submitted"/>
                 <Text text="{dashboard>/submitted}" class="kpiValue"/>
             </VBox>
 
-            <VBox class="kpiCard approvedCard">
+            <VBox  id="approvedCard" class="kpiCard approvedCard">
                 <Title text="Approved"/>
                 <Text text="{dashboard>/approved}" class="kpiValue"/>
             </VBox>
 
-            <VBox class="kpiCard rejectedCard">
+            <VBox id="rejectedCard" class="kpiCard rejectedCard">
                 <Title text="Rejected"/>
                 <Text text="{dashboard>/rejected}" class="kpiValue"/>
             </VBox>
 
-            <VBox class="kpiCard pendingCard">
+            <VBox id="pendingCard" class="kpiCard pendingCard">
                 <Title text="Pending"/>
                 <Text text="{dashboard>/draft}" class="kpiValue"/>
             </VBox>
 
-            <VBox class="kpiCard postedCard">
+            <VBox id="postedCard" class="kpiCard postedCard">
                 <Title text="Posted"/>
                 <Text text="{dashboard>/posted}" class="kpiValue"/>
             </VBox>
 
-            <VBox class="kpiCard errorCard">
-                <Title text="error"/>
+            <VBox id="errorCard" class="kpiCard errorCard">
+                <Title text="Error"/>
                 <Text text="{dashboard>/error}" class="kpiValue"/>
             </VBox>
 
-            <VBox class="kpiCard pendingApprovalCard">
-                <Title text="pending_approval"/>
+            <VBox id="pendingApprovalCard" class="kpiCard pendingApprovalCard">
+                <Title text="Pending_Approval"/>
                 <Text text="{dashboard>/pending_approval}" class="kpiValue"/>
             </VBox>
 
@@ -61,6 +62,9 @@
             width="100%"
             search=".onSearch"/>
 
+            <!-- <DatePicker
+    change=".onDateFilter" /> -->
+
         <!-- Request Table -->
         <Table
             id="requestTable"
@@ -73,11 +77,30 @@
                 </Column>
 
                 <Column>
+                    <Text text="Billing Type"/>
+                </Column>
+
+                <Column>
+                    <Text text="Sub Billing Type"/>
+                </Column>
+
+                <Column>
+                    <Text text="Billing Affiliate"/>
+                </Column>
+
+                <Column>
+                    <Text text="Receiving Affiliate"/>
+                </Column>
+
+                
+                <Column>
+                    <Text text="Date"/>
+                </Column>
+
+                <Column>
                     <Text text="Status"/>
                     
                 </Column>
-
-
 
                 <Column>
                     <Text text="Sales Order"/>
@@ -94,20 +117,17 @@
                 </Column>
 
                 <Column>
-                    <Text text="Billing Option"/>
+                    <Text text="AR Document"/>
                 </Column>
 
                 <Column>
-                    <Text text="Billing Timing"/>
+                    <Text text="AP Document"/>
                 </Column>
 
                 <Column>
-                    <Text text="Billing Type"/>
+                    <Text text="User"/>
                 </Column>
 
-                <Column>
-                    <Text text="Billing Date"/>
-                </Column>
 
             </columns>
 
@@ -118,6 +138,16 @@
                     <cells>
 
                         <Text text="{requestNumber}"/>
+
+                        <Text text="{billingType}"/>
+
+                        <Text text="{billingSubType}"/>
+
+                        <Text text="{billingAffiliateCompanyCode}"/>
+                        
+                        <Text text="{receivingAffiliateCompanyCode}"/>
+
+                        <Text text="{billAtDate}"/>
 
                         <ObjectStatus
                             text="{status}"
@@ -130,13 +160,7 @@
 
                         <Text text="{fiJournalVoucherNumber}"/>
 
-                        <Text text="{billingOption}"/>
-
-                        <Text text="{billingTiming}"/>
-
-                         <Text text="{billingType}"/>
-
-                        <Text text="{billAtDate}"/>
+                        <Text text="{billingAffiliateContact}"/>
 
                     </cells>
 

@@ -34,27 +34,86 @@ sap.ui.define([
             this.getView().setModel(this.requestModel, "requestModel");
 
 
-       
 
-                const oViewModel = new sap.ui.model.json.JSONModel({
-                    totalCount: 0
-                });
 
-                this.getView().setModel(oViewModel, "view");
+            const oViewModel = new sap.ui.model.json.JSONModel({
+                totalCount: 0
+            });
 
-                const oTable = this.byId("requestTable");
+            this.getView().setModel(oViewModel, "view");
 
-                oTable.attachUpdateFinished((oEvent) => {
-                    this.getView()
-                        .getModel("view")
-                        .setProperty(
-                            "/totalCount",
-                            oEvent.getParameter("total")
-                        );
-                });
-            
+            const oTable = this.byId("requestTable");
+
+            oTable.attachUpdateFinished((oEvent) => {
+                this.getView()
+                    .getModel("view")
+                    .setProperty(
+                        "/totalCount",
+                        oEvent.getParameter("total")
+                    );
+            });
+
 
         },
+
+        onAfterRendering: function () {
+
+            this.byId("submittedCard").$()
+                .css("cursor", "pointer")
+                .on("click", () => this._filterByStatus("SUBMITTED"));
+
+            this.byId("approvedCard").$()
+                .css("cursor", "pointer")
+                .on("click", () => this._filterByStatus("APPROVED"));
+
+            this.byId("rejectedCard").$()
+                .css("cursor", "pointer")
+                .on("click", () => this._filterByStatus("REJECTED"));
+
+            this.byId("pendingCard").$()
+                .css("cursor", "pointer")
+                .on("click", () => this._filterByStatus("DRAFT"));
+
+            this.byId("postedCard").$()
+                .css("cursor", "pointer")
+                .on("click", () => this._filterByStatus("POSTED"));
+
+            this.byId("errorCard").$()
+                .css("cursor", "pointer")
+                .on("click", () => this._filterByStatus("ERROR"));
+
+            this.byId("pendingApprovalCard").$()
+                .css("cursor", "pointer")
+                .on("click", () => this._filterByStatus("PENDING_APPROVAL"));
+        },
+
+        _filterByStatus: function (sStatus) {
+
+            this.byId("requestTable")
+                .getBinding("items")
+                .filter([
+                    new sap.ui.model.Filter(
+                        "status",
+                        sap.ui.model.FilterOperator.EQ,
+                        sStatus
+                    )
+                ]);
+        },
+
+        // onDateFilter: function (oEvent) {
+
+        //     const dDate = oEvent.getSource().getDateValue();
+
+        //     this.byId("requestTable")
+        //         .getBinding("items")
+        //         .filter([
+        //             new Filter(
+        //                 "billAtDate",
+        //                 FilterOperator.Contains,
+        //                 dDate
+        //             )
+        //         ]);
+        // },
 
         onSearch: function (oEvent) {
             const sValue = oEvent.getParameter("newValue") ||
@@ -75,17 +134,52 @@ sap.ui.define([
                 new sap.ui.model.Filter("billingType", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
                 new sap.ui.model.Filter("billingTiming", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
                 new sap.ui.model.Filter("billingOption", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
-                new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase())
+                new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
+                new sap.ui.model.Filter("billingSubType", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
+                new sap.ui.model.Filter("billingAffiliateCompanyCode", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
+                new sap.ui.model.Filter("receivingAffiliateCompanyCode", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
+                new sap.ui.model.Filter("billingAffiliateContact", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase())
+
             ];
 
+            const oDate = new Date(sValue);
 
-            // new Filter("billAtDate", FilterOperator.Contains, sValue)
+            if (/^\d{4}-\d{2}-\d{2}$/.test(sValue)) {
+
+                oBinding.filter([
+                    new Filter(
+                        "billAtDate",
+                        FilterOperator.EQ,
+                        sValue
+                    )
+                ]);
+
+                return;
+            }
 
 
             oBinding.filter(new Filter({
                 filters: aFilters,
                 and: false
             }));
+        },
+
+
+        onCardPress: function (oEvent) {
+
+            const sStatus = oEvent.getSource().data("status");
+
+            const oBinding = this.byId("requestTable")
+                .getBinding("items");
+
+            oBinding.filter([
+                new Filter(
+                    "Status",
+                    FilterOperator.EQ,
+                    sStatus.toUpperCase()
+                )
+            ]);
+
         },
 
         onSubmittedPress() {
