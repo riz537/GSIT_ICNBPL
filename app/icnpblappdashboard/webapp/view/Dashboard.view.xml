@@ -2,7 +2,7 @@
     displayBlock="true"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m">
-    <Page title="IC NPB Operations">
+    <Page title="IC NPB Operations Dashboard">
 
     <content>
 
@@ -159,6 +159,10 @@
                         <Text text="{purchaseOrderNumber}"/>
 
                         <Text text="{fiJournalVoucherNumber}"/>
+
+                        <Text text="{billingDocumentNumber}"/>
+
+                        <Text text="{fb60Number}"/>
 
                         <Text text="{billingAffiliateContact}"/>
 
