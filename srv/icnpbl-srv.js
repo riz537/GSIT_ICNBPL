@@ -4,15 +4,13 @@ const { SELECT } = require('@sap/cds/lib/ql/cds-ql');
 module.exports = class IcNpblService extends cds.ApplicationService {
   async init() {
 
-    const { A_PurchaseOrder, ICNPBAttachment, ICCustomer, ICVendor, ExchangeRateConversion, CostCenter, ICNPBRequest, Users, BillingTypes, BillingSubTypeDerivation, AffiliateMaster, MarkupDerivation } = cds.entities('IcNpblService')
+    const { ICNPBAttachment, ICCustomer, ICVendor, CostCenter, ICNPBRequest, Users, BillingTypes, BillingSubTypeDerivation, AffiliateMaster, MarkupDerivation } = cds.entities('IcNpblService')
 
     const mdSrv = await cds.connect.to('masterdata_edmx');
     const poSrv = await cds.connect.to('API_PURCHASEORDER_PROCESS_SRV_edmx');
     const emailSrv = await cds.connect.to("email_iflow");
     const trackingSrv = await cds.connect.to("ZI_PO_DOC_TRACKING_edmx");
-
-
-
+    const financeSrv = await cds.connect.to("FI_API_edmx");
 
     this.on('READ', [ICCustomer, ICVendor, CostCenter], async req => {
       console.log("Inside READ --> req.query below");
@@ -20,29 +18,11 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       return mdSrv.run(req.query);
     });
 
-    // this.on('READ', [POTracking], async req => {
-    //   console.log("Inside READ --> req.query below");
+    // this.on('CREATE', A_PurchaseOrder, async req => {
+    //   console.log("Inside CREATE --> A_PurchaseOrder");
     //   console.log(JSON.stringify(req.query, null, 2));
-    //   const result = await getpoSrv.run(req.query);
-    //   await INSERT.into('POTrackingLocal').entries(result);
-    //   return result;
+    //   return poSrv.run(req.query);
     // });
-
-    this.on('CREATE', A_PurchaseOrder, async req => {
-      console.log("Inside CREATE --> A_PurchaseOrder");
-      console.log(JSON.stringify(req.query, null, 2));
-      return poSrv.run(req.query);
-    });
-
-    // this.on('triggerPofetch', async req => {
-
-    //   const data = await getpoSrv.run(SELECT.from('PurchaseOrderDocTracking').limit(5))
-    //   await UPSERT.into('POTrackingLocal').entries(data);
-    //   console.log("complete fetch:",JSON.stringify(data, null, 2));
-    //   return "success";
-    // });
-
-
 
     this.on('getExchangeRate', async req => {
       const { sourceAmount, sourceCurrency, targetCurrency } = req.data;
@@ -88,7 +68,6 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       req.data.uploadUrl = "https://lly-sbx-playground-gsit-icnpbl-srv.cfapps.us10.hana.ondemand.com/odata/v4/ic-npbl/ICNPBAttachment(" + req.data.ID + ")/fileContent";
     });
 
-
     this.on('getBillingSubTypes', async (req) => {
       console.log("I am inside the getBillingSubTypes");
       console.log(req.data);
@@ -124,22 +103,13 @@ module.exports = class IcNpblService extends cds.ApplicationService {
     });
 
     this.on("getCounts", async (req) => {
-
-
       const submitted = await SELECT.one.from(ICNPBRequest).columns('count(*) as CNT').where({ status: "SUBMITTED" });
-
       const approved = await SELECT.one.from(ICNPBRequest).columns('count(*) as CNT').where({ status: "APPROVED" });
-
       const rejected = await SELECT.one.from(ICNPBRequest).columns('count(*) as CNT').where({ status: "REJECTED" });
-
       const draft = await SELECT.one.from(ICNPBRequest).columns('count(*) as CNT').where({ status: "DRAFT" });
-
       const posted = await SELECT.one.from(ICNPBRequest).columns('count(*) as CNT').where({ status: "POSTED" });
-
       const error = await SELECT.one.from(ICNPBRequest).columns('count(*) as CNT').where({ status: "ERROR" });
-
       const pending_approval = await SELECT.one.from(ICNPBRequest).columns('count(*) as CNT').where({ status: "PENDING_APPROVAL" });
-
       return {
         submitted: submitted?.CNT || 0,
         approved: approved?.CNT || 0,
@@ -175,7 +145,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       const threshold = Number(billingSubTypeInfo.threshold || 0);
 
       const requestAmount = Number(request.totalAmountLocal || 0);
-       
+
 
       if (requestAmount <= threshold) {
         req.reject(
@@ -185,7 +155,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       }
 
       const submitterUser = await SELECT.one.from(Users).where({ emailId: request.createdBy });
-      const autoApprove =  submitterUser?.taxSubmitter === "Yes" &&  isEOMMinus5ToEOM();
+      const autoApprove = submitterUser?.taxSubmitter === "Yes" && isEOMMinus5ToEOM();
       console.log("Auto Approve Flag --->", autoApprove);
 
 
@@ -193,7 +163,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       const payload = {
         "definitionId": "us10.lly-sbx.icnpb.iCNPBProcess",
         "context": {
-          "autoApprove":autoApprove,
+          "autoApprove": autoApprove,
           "requestId": requestId,
           "requestNumber": request.requestNumber,
           "billingType": request.billingType,
@@ -245,75 +215,26 @@ module.exports = class IcNpblService extends cds.ApplicationService {
           .where({
             ID: requestId
           });
+        return "SUCCESS";
       } catch (error) {
         console.log("inside error");
         console.log(error);
         if (error.reason?.response) {
           console.log("HTTP Status code:" + error.reason.response.status);
           console.log("Response Details:" + error.reason.response.data);
+          return "ERROR";
         }
-
       }
-      //email trigger
-      const { submitterName, approverName } = await getUserNames(request);
-      try {
-        // Email to Submitter
-        await sendEmail(
-          request.createdBy,
-          `ICNPB Request Submitted - ${request.requestNumber}`,
-          buildSubmitEmail(request, submitterName)
-        );
-        // Email to Approver
-        await sendEmail(
-          request.receivingAffiliateContact,
-          `Approval Required - ${request.requestNumber}`,
-          buildApproverEmail(request, approverName)
-        );
-      } catch (emailError) {
-        console.error("Email Error --->");
-        console.error(emailError);
-      }
-
-
     });
-    this.on('updateRequestStatus', async req => {
-      const { requestId, status } = req.data;
-      const count = await UPDATE(ICNPBRequest)
-        .set({
-          status: status
-        })
-        .where({
-          ID: requestId
-        });
-
-      if (count === 0) {
-        return "ERROR";
-      }
-
-      const request = await SELECT.one
-        .from(ICNPBRequest)
-        .where({
-          ID: requestId
-        });
-      const { submitterName } = await getUserNames(request);
-      try {
-        if (status === "APPROVED") {
-          await sendEmail(
-            request.createdBy,
-            `ICNPB Request-${request.requestNumber} Approved`,
-            buildApprovalEmail(request, submitterName)
-          );
-        }
-        if (status === "REJECTED") {
-          await sendEmail(
-            request.createdBy,
-            `ICNPB Request-${request.requestNumber} Rejected`,
-            buildRejectionEmail(request, submitterName)
-          );
-        }
-      } catch (emailError) {
-        console.error(emailError);
-      }
+    this.on("updateRequest", async req => {
+      const { requestId, status, poNumber, soNumber, fiNumber, errorMessage } = req.data;
+      const payload = {};
+      if (status) payload.status = status;
+      if (poNumber) payload.purchaseOrderNumber = poNumber;
+      if (soNumber) payload.salesOrderNumber = soNumber;
+      if (fiNumber) payload.fiNumber = fiNumber;
+      if (errorMessage) payload.errorMessage = errorMessage;
+      await UPDATE(ICNPBRequest).set(payload).where({ ID: requestId });
       return "SUCCESS";
     });
 
@@ -383,7 +304,6 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       console.log(payload);
       console.log("Stringyfied payload");
       console.log(JSON.stringify(payload));
-      var poNumber, soNumber;
       try {
         const result = await poSrv.send({
           method: 'POST',
@@ -393,75 +313,183 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         console.log("PO CREATION Response---->");
         console.log(result);
 
-        poNumber = result.PurchaseOrder;
-        if (!poNumber) {
-          throw new Error("PO Number not returned from S4");
-        }
-        await UPDATE(ICNPBRequest)
-          .set({
-            purchaseOrderNumber: poNumber,
-            status: 'POSTED'
-          })
-          .where({
-            ID: requestId
-          });
-        //return "SUCCESS";
+        const poNumber = result.PurchaseOrder;
+        if (!poNumber) return "ERROR";
+        return poNumber;
       } catch (error) {
         console.error("PO CREATION FAILED");
         console.error(error);
-        await UPDATE(ICNPBRequest)
-          .set({
-            status: 'ERROR',
-            errorMessage:
-              error.message?.substring(0, 500) ||
-              'PO Creation Failed'
-          })
-          .where({
-            ID: requestId
-          });
         return "ERROR";
       }
-      //trigger an SO call to get the SO number 
-      console.log("before set time out -->");
-
-      await new Promise(resolve =>
-        setTimeout(resolve, 5000)
-      );
-      console.log("after time out and before SO Trigger Response -->");
+    });
+    this.on("getSalesOrder", async req => {
+      const { poNumber } = req.data;
+      if (!poNumber) return "ERROR";
+      await new Promise(resolve => setTimeout(resolve, 8000));
       try {
+        console.log("Before SO Trigger --->");
         const soResult = await trackingSrv.send({
-          method: 'GET',
-          path:
-            `/SalesDebitMemoFlow?$filter=PurchaseOrder eq '${poNumber}'`
+          method: "GET",
+          path: `/SalesDebitMemoFlow?$filter=PurchaseOrder eq '${poNumber}'`
         });
-
-        console.log("SO Response -->");
+        console.log("SO Response --->");
         console.log(JSON.stringify(soResult));
-        soNumber = soResult?.[0]?.SalesOrder;
-        await UPDATE(ICNPBRequest)
-          .set({
-            salesOrderNumber: soResult?.[0]?.SalesOrder,
-            status: 'POSTED'
-          })
-          .where({
-            ID: requestId
-          });
+        const soNumber = soResult?.[0]?.SalesOrder;
+        if (!soNumber) return "ERROR";
+        return soNumber;
       } catch (error) {
-        console.error("SO CREATION FAILED");
+        console.error("SO FETCH FAILED");
         console.error(error);
-        await UPDATE(ICNPBRequest)
-          .set({
-            status: 'ERROR',
-            errorMessage:
-              error.message?.substring(0, 500) ||
-              'SO Creation Failed'
-          })
-          .where({
-            ID: requestId
-          });
         return "ERROR";
       }
-      //send email code below
+    });
+    this.on("createFinanceDocument", async req => {
+      const { requestId } = req.data;
+      const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
+      if (!request) return "ERROR";
+      
+      const markupInfo = await SELECT.one.from(MarkupDerivation).where({ billingSubType: request.billingSubType });
+      const billDate = new Date(request.billAtDate);
+      const yyyy = billDate.getFullYear().toString();
+      const mm = String(billDate.getMonth() + 1).padStart(2, "0");
+      const dd = String(billDate.getDate()).padStart(2, "0");
+      const sapDate = `${yyyy}${mm}${dd}`;
+      const payload = {
+        Username: "ICOUSER",
+        HeaderTxt: request.billingDescription,
+        CompCode: request.billingAffiliateCompanyCode,
+        DocDate: sapDate,
+        PstngDate: sapDate,
+        TransDate: sapDate,
+        FiscYear: yyyy,
+        FisPeriod: mm,
+        DocType: "S6",
+        RefDocNo: "BGI",
+        ToAccountGL: [
+          {
+            ItemnoAcc: "0000000001",
+            GlAccount: leftPad(markupInfo.fb01Debit, 10),
+            ItemText: request.billingDescription,
+            BusArea: "A",
+            TradeId: leftPad(request.receivingAffiliateCompanyCode,6),
+            SalesOrd: leftPad(request.salesOrderNumber, 10),
+            SOrdItem: "000010"
+          },
+          {
+            ItemnoAcc: "0000000002",
+            GlAccount: leftPad(request.billingAffiliateCostElement, 10),
+            ItemText: request.billingDescription,
+            BusArea: "A",
+            TradeId: leftPad(request.receivingAffiliateCompanyCode,6),
+            CostCenter: leftPad(request.billingAffiliateCostCenter, 10)
+          }
+        ],
+        ToCurrencyAmount: [
+          {
+            ItemnoAcc: "0000000001",
+            Currency: request.currencyLocal,
+            AmtDoccur: Number(request.actualAmountLocal ).toFixed(3)
+          },
+          {
+            ItemnoAcc: "0000000002",
+            Currency: request.currencyLocal,
+            AmtDoccur: ( Number(request.actualAmountLocal) * -1).toFixed(3)
+          }
+        ]
+      };
+      console.log("FI Payload --->");
+      console.log(JSON.stringify(payload));
+      try {
+        const result = await financeSrv.send({
+          method: "POST",
+          path: "/PostHeaderSet",
+          data: payload
+        });
+        console.log("FI Response --->");
+        console.log(JSON.stringify(result, null, 2));
+
+        const fiNumber = result?.ObjKey || result?.d?.ObjKey;
+        if (!fiNumber) return "ERROR";
+        return fiNumber;
+      } catch (error) {
+        console.error("FINANCE POSTING FAILED");
+        console.error(error);
+        return "ERROR";
+      }
+    });
+
+    this.on("sendSubmitterEmail", async req => {
+      const { requestId } = req.data;
+      const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
+      if (!request) return "ERROR";
+      const { submitterName } = await getUserNames(request);
+      try {
+        await sendEmail(
+          request.createdBy,
+          `ICNPB Request Submitted - ${request.requestNumber}`,
+          buildSubmitEmail(request, submitterName)
+        );
+        return "SUCCESS";
+      } catch (error) {
+        console.error(error);
+        return "ERROR";
+      }
+    });
+    this.on("sendApproverEmail", async req => {
+      const { requestId } = req.data;
+      const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
+      if (!request) return "ERROR";
+      const { approverName } = await getUserNames(request);
+      try {
+        await sendEmail(
+          request.receivingAffiliateContact,
+          `Approval Required - ${request.requestNumber}`,
+          buildApproverEmail(request, approverName)
+        );
+        return "SUCCESS";
+      } catch (error) {
+        console.error(error);
+        return "ERROR";
+      }
+    });
+    this.on("sendApprovalEmail", async req => {
+      const { requestId } = req.data;
+      const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
+      if (!request) return "ERROR";
+      const { submitterName } = await getUserNames(request);
+      try {
+        await sendEmail(
+          request.createdBy,
+          `ICNPB Request-${request.requestNumber} Approved`,
+          buildApprovalEmail(request, submitterName)
+        );
+        return "SUCCESS";
+      } catch (error) {
+        console.error(error);
+        return "ERROR";
+      }
+    });
+    this.on("sendRejectionEmail", async req => {
+      const { requestId } = req.data;
+      const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
+      if (!request) return "ERROR";
+      const { submitterName } = await getUserNames(request);
+      try {
+        await sendEmail(
+          request.createdBy,
+          `ICNPB Request-${request.requestNumber} Rejected`,
+          buildRejectionEmail(request, submitterName)
+        );
+        return "SUCCESS";
+      } catch (error) {
+        console.error(error);
+        return "ERROR";
+      }
+    });
+    this.on("sendPOEmail", async req => {
+      const { requestId, poNumber } = req.data;
+      const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
+      if (!request) return "ERROR";
       const { submitterName } = await getUserNames(request);
       try {
         await sendEmail(
@@ -469,15 +497,13 @@ module.exports = class IcNpblService extends cds.ApplicationService {
           `Purchase Order Created - ${poNumber}`,
           buildPOEmail(request, submitterName, poNumber)
         );
-      } catch (emailError) {
-        console.log("emailErrorafter posting to sap");
-        console.error(emailError);
+        return "SUCCESS";
+      } catch (error) {
+        console.error(error);
+        return "ERROR";
       }
-      return "SUCCESS";
     });
-
-
-
+    const leftPad = (value, length) => String(value).padStart(length, "0");
     //reusable function to trigger email
     const sendEmail = async (to, subject, body) => {
       const payload = [{
@@ -615,12 +641,14 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         <p>Hi ${submitterName},</p>
 
         <p>
-        A Purchase Order has been created successfully for your ICNPB request.
+        The following has been created successfully for your ICNPB request.
         </p>
 
         <p>
         <b>Request Number:</b> ${request.requestNumber}<br>
         <b>Purchase Order:</b> ${poNumber}<br>
+        <b>Sales Order:</b> ${request.salesOrderNumber}<br>
+        <b>FI Journal Voucher Number:</b> ${request.fiJournalVoucherNumber}<br>
         <b>Amount:</b> ${request.totalAmountCustomer} ${request.currencyCustomer}
         </p>
 

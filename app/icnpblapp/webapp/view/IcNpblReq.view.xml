@@ -133,7 +133,7 @@
                     </VBox>
                     <VBox >
                         <Label text="Actual Amount To Be Billed"></Label>
-                        <Input id="oIpActualAmount" value="{requestModel>/actualAmountLocal}"></Input>
+                        <Input id="oIpActualAmount" value="{requestModel>/actualAmountLocal}" change="onChangeMarkup" ></Input>
                     </VBox>
                     <VBox >
                         <Label text="MarkUp%"></Label>

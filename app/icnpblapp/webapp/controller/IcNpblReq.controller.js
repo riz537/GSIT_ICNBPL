@@ -209,34 +209,38 @@ sap.ui.define([
             this.ccDialog.close();
         },
         onChangeMarkup: async function () {
-            sap.ui.core.BusyIndicator.show(0);
+
             var markup = this.byId("oSIMarkup").getValue();
             var actualAmount = this.byId("oIpActualAmount").getValue();
-            var markupAmount = actualAmount * (markup / 100);
-            var totalActualAmount = parseFloat(actualAmount) + parseFloat(markupAmount);
-            this.byId("oIpMarkupAmount").setValue(markupAmount);
-            this.byId("oIpTotalActualAmount").setValue(totalActualAmount);
-            var localCurrency = this.byId("oIpLocalCurrency").getValue();
-            var customerCurrency = this.byId("oIpCustomerCurrency").getValue();
-            const amount = parseFloat(this.byId("oIpTotalActualAmount").getValue()) || 0;
-            //const result = await this.getExchangeRate(10, "EUR", "USD");
+            if (markup !== "" && actualAmount !== "") {
 
-            if (localCurrency === customerCurrency) {
-                this.byId("oIpTotalAmountCustomer").setValue(totalActualAmount);
-            } else {
-                //call and get the amount in custmer currency
-                const convertedAmount = await this.getExchangeRate(amount, localCurrency, customerCurrency);
-                this.byId("oIpTotalAmountCustomer").setValue(convertedAmount);
+                sap.ui.core.BusyIndicator.show(0);
+                var markupAmount = actualAmount * (markup / 100);
+                var totalActualAmount = parseFloat(actualAmount) + parseFloat(markupAmount);
+                this.byId("oIpMarkupAmount").setValue(markupAmount);
+                this.byId("oIpTotalActualAmount").setValue(totalActualAmount);
+                var localCurrency = this.byId("oIpLocalCurrency").getValue();
+                var customerCurrency = this.byId("oIpCustomerCurrency").getValue();
+                const amount = parseFloat(this.byId("oIpTotalActualAmount").getValue()) || 0;
+
+                if (localCurrency === customerCurrency) {
+                    this.byId("oIpTotalAmountCustomer").setValue(totalActualAmount);
+                } else {
+                    //call and get the amount in custmer currency
+                    const convertedAmount = await this.getExchangeRate(amount, localCurrency, customerCurrency);
+                    this.byId("oIpTotalAmountCustomer").setValue(convertedAmount);
+                }
+                if (localCurrency === "USD") {
+                    this.byId("oIpTotalAmountUSD").setValue(totalActualAmount);
+                } else if (customerCurrency === "USD") {
+                    this.byId("oIpTotalAmountUSD").setValue(this.byId("oIpTotalAmountCustomer").getValue());
+                } else {
+                    const convertedAmount = await this.getExchangeRate(amount, localCurrency, "USD");
+                    this.byId("oIpTotalAmountUSD").setValue(convertedAmount);
+                }
+                sap.ui.core.BusyIndicator.hide();
             }
-            if (localCurrency === "USD") {
-                this.byId("oIpTotalAmountUSD").setValue(totalActualAmount);
-            } else if (customerCurrency === "USD") {
-                this.byId("oIpTotalAmountUSD").setValue(this.byId("oIpTotalAmountCustomer").getValue());
-            } else {
-                const convertedAmount = await this.getExchangeRate(amount, localCurrency, "USD");
-                this.byId("oIpTotalAmountUSD").setValue(convertedAmount);
-            }
-            sap.ui.core.BusyIndicator.hide();
+
         },
         async getExchangeRate(amount, sourceCurrency, targetCurrency) {
             try {
@@ -435,7 +439,7 @@ sap.ui.define([
                 payload.billAtDate = this.byId("oDPBillingDate").getDateValue()?.toISOString().split("T")[0];
                 payload.billingTiming = "LATER";
             }
-            const oValidation =  oModel.bindContext("/validateSubmitter(...)");
+            const oValidation = oModel.bindContext("/validateSubmitter(...)");
             await oValidation.execute();
             const oListBinding = oModel.bindList("/ICNPBRequest");
             const oContext = oListBinding.create(payload);
