@@ -10,9 +10,14 @@
         <HBox class="sapUiMediumMarginBottom">
         
 
-            <VBox id="submittedCard" class="kpiCard submittedCard" >
+            <!-- <VBox id="submittedCard" class="kpiCard submittedCard" >
                 <Title text="Submitted"/>
                 <Text text="{dashboard>/submitted}" class="kpiValue"/>
+            </VBox> -->
+
+            <VBox id="allcard" class="kpiCard allCard">
+                <Title text="All"/>
+                <Text text="{dashboard>/total}" class="kpiValue"/>
             </VBox>
 
             <VBox  id="approvedCard" class="kpiCard approvedCard">
@@ -25,10 +30,10 @@
                 <Text text="{dashboard>/rejected}" class="kpiValue"/>
             </VBox>
 
-            <VBox id="pendingCard" class="kpiCard pendingCard">
+            <!-- <VBox id="pendingCard" class="kpiCard pendingCard">
                 <Title text="Pending"/>
                 <Text text="{dashboard>/draft}" class="kpiValue"/>
-            </VBox>
+            </VBox> -->
 
             <VBox id="postedCard" class="kpiCard postedCard">
                 <Title text="Posted"/>
@@ -41,21 +46,22 @@
             </VBox>
 
             <VBox id="pendingApprovalCard" class="kpiCard pendingApprovalCard">
-                <Title text="Pending_Approval"/>
+                <Title text="Pending Approval"/>
                 <Text text="{dashboard>/pending_approval}" class="kpiValue"/>
             </VBox>
 
+        
         </HBox>
 
         <!-- Filter Pills -->
-        <HBox class="sapUiSmallMarginBottom">
+        <!-- <HBox class="sapUiSmallMarginBottom">
 
             <Button
                 text="All"
                 type="Emphasized"
                 press=".onAllPress"/>
 
-        </HBox>
+        </HBox> -->
 
         <!-- Search -->
         <SearchField
@@ -150,9 +156,9 @@
                         <Text text="{billAtDate}"/>
 
                         <ObjectStatus
-                            text="{status}"
-                            state="{= ${status} === 'APPROVED' ? 'Success' :
-                                ${status} === 'DRAFT' ? 'Warning' : 'Information'}"/>
+                            text="{status}"/>
+                            <!-- state="{= ${status} === 'APPROVED' ? 'Success' :
+                                ${status} === 'DRAFT' ? 'Warning' : 'Information'}"/> -->
 
                         <Text text="{salesOrderNumber}"/>
 
@@ -172,14 +178,14 @@
 
             </items>
 
-            <headerToolbar>
+            <!-- <headerToolbar>
                 <OverflowToolbar>
                     <ToolbarSpacer />
                     <ObjectStatus
                         text="Total Items: {view>/totalCount}"
                         state="Information" />
                 </OverflowToolbar>
-            </headerToolbar>
+            </headerToolbar> -->
 
         </Table>
 

@@ -58,9 +58,14 @@ sap.ui.define([
 
         onAfterRendering: function () {
 
-            this.byId("submittedCard").$()
+            // this.byId("submittedCard").$()
+            //     .css("cursor", "pointer")
+            //     .on("click", () => this._filterByStatus("SUBMITTED"));
+
+            this.byId("allcard").$()
                 .css("cursor", "pointer")
-                .on("click", () => this._filterByStatus("SUBMITTED"));
+                .on("click", () => this._filterByStatus("TOTAL"));
+
 
             this.byId("approvedCard").$()
                 .css("cursor", "pointer")
@@ -70,9 +75,9 @@ sap.ui.define([
                 .css("cursor", "pointer")
                 .on("click", () => this._filterByStatus("REJECTED"));
 
-            this.byId("pendingCard").$()
-                .css("cursor", "pointer")
-                .on("click", () => this._filterByStatus("DRAFT"));
+            // this.byId("pendingCard").$()
+            //     .css("cursor", "pointer")
+            //     .on("click", () => this._filterByStatus("DRAFT"));
 
             this.byId("postedCard").$()
                 .css("cursor", "pointer")
@@ -88,6 +93,13 @@ sap.ui.define([
         },
 
         _filterByStatus: function (sStatus) {
+
+            const oBinding = this.byId("requestTable").getBinding("items");
+
+            if (sStatus === "TOTAL") {
+                oBinding.filter([]);
+                return;
+            }
 
             this.byId("requestTable")
                 .getBinding("items")

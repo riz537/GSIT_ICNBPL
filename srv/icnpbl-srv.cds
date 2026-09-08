@@ -20,56 +20,54 @@ service IcNpblService {
     //====================================================
     // Utility Functions
     //====================================================
-    function getBillingSubTypes(billingType: String)              returns array of BillingSubTypeDerivation;
-    function getCountryCode(companyCode: String)                  returns AffiliateMaster;
+    function getBillingSubTypes(billingType: String)        returns array of BillingSubTypeDerivation;
+    function getCountryCode(companyCode: String)            returns AffiliateMaster;
 
     function getExchangeRate(sourceAmount: Decimal(15, 2),
                              sourceCurrency: String(5),
-                             targetCurrency: String(5))           returns Decimal(15, 2);
-     function getCounts()                                          returns {
-        submitted        : Integer;
+                             targetCurrency: String(5))     returns Decimal(15, 2);
+
+    function getCounts()                                    returns {
+        total            : Integer;
         approved         : Integer;
         rejected         : Integer;
-        draft            : Integer;
         posted           : Integer;
         error            : Integer;
         pending_approval : Integer;
-    };                         
+    };
 
     //====================================================
     // UI Actions
     //====================================================
-    action   validateSubmitter()                                  returns String;
-    action   submitForApproval(requestId: UUID)                   returns String;
+    action   validateSubmitter()                            returns String;
+    action   submitForApproval(requestId: UUID)             returns String;
 
     //====================================================
     // Generic Request Update Action. BPA can call this at any stage
     //====================================================
-    action updateRequest(
-        requestId    : UUID,
-        status       : String,
-        poNumber     : String,
-        soNumber     : String,
-        fiNumber     : String,
-        errorMessage : String
-    ) returns String;
+    action   updateRequest(requestId: UUID,
+                           status: String,
+                           poNumber: String,
+                           soNumber: String,
+                           fiNumber: String,
+                           errorMessage: String)            returns String;
 
-     //====================================================
+    //====================================================
     // SAP Integration Actions
     //====================================================
 
-    action createPurchaseOrder(requestId : UUID ) returns String;
-    action getSalesOrder(poNumber : String) returns String;
-    action createFinanceDocument(requestId : UUID) returns String;
+    action   createPurchaseOrder(requestId: UUID)           returns String;
+    action   getSalesOrder(poNumber: String)                returns String;
+    action   createFinanceDocument(requestId: UUID)         returns String;
 
-     //====================================================
+    //====================================================
     // Email Actions
     //====================================================
 
-    action sendSubmitterEmail(requestId : UUID) returns String;
-    action sendApproverEmail(requestId : UUID) returns String;
-    action sendApprovalEmail(requestId : UUID) returns String;
-    action sendRejectionEmail(requestId : UUID) returns String;
-    action sendPOEmail(requestId : UUID,poNumber  : String) returns String;
+    action   sendSubmitterEmail(requestId: UUID)            returns String;
+    action   sendApproverEmail(requestId: UUID)             returns String;
+    action   sendApprovalEmail(requestId: UUID)             returns String;
+    action   sendRejectionEmail(requestId: UUID)            returns String;
+    action   sendPOEmail(requestId: UUID, poNumber: String) returns String;
 
 }
