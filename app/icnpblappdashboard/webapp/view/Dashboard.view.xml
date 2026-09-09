@@ -72,6 +72,7 @@
     change=".onDateFilter" /> -->
 
         <!-- Request Table -->
+        
         <Table
             id="requestTable"
             items="{/ICNPBRequest}">
@@ -166,11 +167,11 @@
 
                         <Text text="{fiJournalVoucherNumber}"/>
 
-                        <Text text="{billingDocumentNumber}"/>
+                        <Text text="{ICARDocument}"/>
 
-                        <Text text="{fb60Number}"/>
+                        <Text text="{ICAPDocument}"/>
 
-                        <Text text="{billingAffiliateContact}"/>
+                        <Text text="{userId}"/>
 
                     </cells>
 

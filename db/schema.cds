@@ -188,6 +188,7 @@ entity ICNPBRequest : cuid, managed {
                                         on approvalHistory.request = $self;
     workflowInstanceId            : String(100);
     taskId : String(100);
+    userId: String(100);
 }
 
 /* =========================
