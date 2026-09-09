@@ -51,6 +51,8 @@ service IcNpblService {
         poNumber     : String,
         soNumber     : String,
         fiNumber     : String,
+        ICARDocument : String,
+        ICAPDocument : String,
         errorMessage : String
     ) returns String;
 
@@ -59,7 +61,7 @@ service IcNpblService {
     //====================================================
 
     action createPurchaseOrder(requestId : UUID ) returns String;
-    action getSalesOrder(poNumber : String) returns String;
+    action getSalesOrder(poNumber : String) returns db.SalesOrderResponse;
     action createFinanceDocument(requestId : UUID) returns String;
 
     //====================================================

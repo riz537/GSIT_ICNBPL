@@ -235,7 +235,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       if (status) payload.status = status;
       if (poNumber) payload.purchaseOrderNumber = poNumber;
       if (soNumber) payload.salesOrderNumber = soNumber;
-      if (fiNumber) payload.fiNumber = fiNumber;
+      if (fiNumber) payload.fiJournalVoucherNumber = fiNumber;
       if (ICARDocument) payload.ICARDocument = ICARDocument;
       if (ICAPDocument) payload.ICAPDocument = ICAPDocument;
       if (errorMessage) payload.errorMessage = errorMessage;
@@ -417,7 +417,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         console.log("FI Response --->");
         console.log(JSON.stringify(result, null, 2));
 
-        const fiNumber = result?.ObjKey || result?.d?.ObjKey;
+        const fiNumber = result?.ObjKey;
         if (!fiNumber) return "ERROR";
         return fiNumber;
       } catch (error) {
@@ -445,19 +445,20 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       }
     });
     this.on("sendApproverEmail", async req => {
+      
       console.log("ZZZZZZZZZZ SEND APPROVERRRRR EMAIL ZZZZZZZZZ");
       const { requestId } = req.data;
       const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
       if (!request) return "ERROR";
-      //let taskId = request.taskId;
-      //console.log("taskId"); console.log(taskId);
-      // if (!taskId) {
-      //   taskId = await getTaskId(request.workflowInstanceId);
-      //   //await UPDATE(ICNPBRequest).set({ taskId }).where({ ID: requestId });
-      // }
+      let taskId = request.taskId;
+      console.log("taskId"); console.log(taskId);
+      if (!taskId) {
+        taskId = await getTaskId(request.workflowInstanceId);
+        //await UPDATE(ICNPBRequest).set({ taskId }).where({ ID: requestId });
+      }
       // const inboxUrl =
       //   `https://lly-sbx.us10.process-automation.build.cloud.sap/comsapspaprocessautomation.comsapspainbox/inbox.html#/detail/NA/${taskId}/TaskCollection(SAP__Origin='NA',InstanceID='${taskId}')`;
-      
+
       const inboxUrl = "https://lly-sbx.launchpad.cfapps.us10.hana.ondemand.com/site/demo#WorkflowTask-DisplayMyInbox";
       const { approverName } = await getUserNames(request);
       try {
@@ -672,6 +673,8 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         <b>Purchase Order:</b> ${poNumber}<br>
         <b>Sales Order:</b> ${request.salesOrderNumber}<br>
         <b>FI Journal Voucher Number:</b> ${request.fiJournalVoucherNumber}<br>
+        <b>ICAR Number:</b> ${request.ICARDocument}<br>
+        <b>ICAP Number:</b> ${request.ICAPDocument}<br>
         <b>Amount:</b> ${request.totalAmountCustomer} ${request.currencyCustomer}
         </p>
 
@@ -681,42 +684,94 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         </p>
     `;
     };
+    // const getTaskId = async (workflowInstanceId) => {
+    //   try {
+    //     console.log("workflowInstanceId--->" + workflowInstanceId);
+    //     const bpaAPI = await cds.connect.to("bpa_dest");
+    //     const result = await bpaAPI.send({
+    //       method: "GET",
+    //       path: "/workflow/rest/v1/task-instances?$orderby=createdAt desc"
+    //     });
+
+    //     const task = result.find(
+    //       t => t.workflowInstanceId === workflowInstanceId
+    //     );
+
+    //     console.log("MATCHED TASK");
+    //     console.log(JSON.stringify(task));
+
+    //     console.log("================================");
+    //     console.log("TYPE OF RESULT");
+    //     console.log(typeof result);
+
+    //     console.log("RAW RESULT");
+    //     console.dir(result);
+
+    //     console.log("STRINGIFIED RESULT");
+    //     console.log(JSON.stringify(result));
+
+    //     console.log("================================");
+    //     if (result.length > 0) {
+    //       return result[0].id;
+    //     }
+    //     return null;
+    //   } catch (error) {
+    //     console.log("TASK API RESPONSE FAILED");
+    //     console.log(error);
+    //   }
+
+    // };
     const getTaskId = async (workflowInstanceId) => {
       try {
-        console.log("workflowInstanceId--->" + workflowInstanceId);
+        console.log("Looking for task of workflow:", workflowInstanceId);
+
         const bpaAPI = await cds.connect.to("bpa_dest");
-        const result = await bpaAPI.send({
-          method: "GET",
-          path: "/workflow/rest/v1/task-instances?$orderby=createdAt desc"
-        });
 
-        const task = result.find(
-          t => t.workflowInstanceId === workflowInstanceId
-        );
+        const maxRetries = 10;
+        const delayMs = 2000;
 
-        console.log("MATCHED TASK");
-        console.log(JSON.stringify(task));
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
 
-        console.log("================================");
-        console.log("TYPE OF RESULT");
-        console.log(typeof result);
+          console.log(`Attempt ${attempt}/${maxRetries}`);
 
-        console.log("RAW RESULT");
-        console.dir(result);
+          const result = await bpaAPI.send({
+            method: "GET",
+            path: "/workflow/rest/v1/task-instances?$filter=workflowInstanceId eq '" + workflowInstanceId + "'"
+          });
+          console.log("RESULT from task instances API----> ");
+          console.log(result);
+          if (Array.isArray(result)) {
 
-        console.log("STRINGIFIED RESULT");
-        console.log(JSON.stringify(result));
+            const task = result.find(
+              t =>
+                t.workflowInstanceId === workflowInstanceId &&
+                (t.status === "READY" || t.status === "RESERVED")
+            );
 
-        console.log("================================");
-        if (result.length > 0) {
-          return result[0].id;
+            if (task) {
+              console.log("Task found:");
+              console.log(JSON.stringify(task, null, 2));
+
+              return task.id;
+            }
+          }
+
+          console.log("Task not found yet for workflow " + workflowInstanceId + ". Waiting " + delayMs + "ms...");
+
+          await new Promise(resolve => setTimeout(resolve, delayMs));
         }
-        return null;
-      } catch (error) {
-        console.log("TASK API RESPONSE FAILED");
-        console.log(error);
-      }
 
+        console.log(
+          "No task found after" + maxRetries + "attempts for workflow" + workflowInstanceId);
+
+        return null;
+
+      } catch (error) {
+        console.error("Error while fetching task ID");
+        console.error(error);
+
+        return null;
+      }
     };
     const getUserNames = async (request) => {
       const submitter = await SELECT.one
