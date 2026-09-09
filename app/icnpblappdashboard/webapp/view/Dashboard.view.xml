@@ -72,66 +72,68 @@
     change=".onDateFilter" /> -->
 
         <!-- Request Table -->
-        
+      <ScrollContainer horizontal="true" vertical="true" width="100%" height="70%">
+      
+     
         <Table
             id="requestTable"
             items="{/ICNPBRequest}">
 
             <columns>
 
-                <Column>
+                <Column width="12em">
                     <Text text="Request"/>
                 </Column>
 
-                <Column>
+                <Column width="10em">
                     <Text text="Billing Type"/>
                 </Column>
 
-                <Column>
+                <Column width="10em">
                     <Text text="Sub Billing Type"/>
                 </Column>
 
-                <Column>
+                <Column width="10em">
                     <Text text="Billing Affiliate"/>
                 </Column>
 
-                <Column>
+                <Column width="10em">
                     <Text text="Receiving Affiliate"/>
                 </Column>
 
                 
-                <Column>
+                <Column width="10em">
                     <Text text="Date"/>
                 </Column>
 
-                <Column>
+                <Column width="15em">
                     <Text text="Status"/>
                     
                 </Column>
 
-                <Column>
+                <Column width="10em">
                     <Text text="Sales Order"/>
                 </Column>
 
                 
-                <Column>
+                <Column width="10em">
                     <Text text="Purchase Order"/>
                 </Column>
 
                 
-                <Column>
+                <Column width="10em">
                     <Text text="Voucher Number"/>
                 </Column>
 
-                <Column>
+                <Column width="10em">
                     <Text text="AR Document"/>
                 </Column>
 
-                <Column>
+                <Column width="10em">
                     <Text text="AP Document"/>
                 </Column>
 
-                <Column>
+                <Column width="15em">
                     <Text text="User"/>
                 </Column>
 
@@ -189,7 +191,7 @@
             </headerToolbar> -->
 
         </Table>
-
+ </ScrollContainer>  
     </content>
 
 </Page>
