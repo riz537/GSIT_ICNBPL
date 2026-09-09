@@ -1,7 +1,7 @@
 <core:FragmentDefinition xmlns:core="sap.ui.core"
     xmlns="sap.m">
     <Dialog title="Select Contact" contentWidth="70%">
-        <Table items="{/Users}" >
+        <Table items="{path:'/Users',events:{dataRequested:'.dataRequested',dataReceived:'.dataReceived'}}" >
             <columns>
                 <Column >
                     <Text text="User ID"></Text>

@@ -45,20 +45,22 @@ service IcNpblService {
     //====================================================
     // Generic Request Update Action. BPA can call this at any stage
     //====================================================
-    action   updateRequest(requestId: UUID,
-                           status: String,
-                           poNumber: String,
-                           soNumber: String,
-                           fiNumber: String,
-                           errorMessage: String)            returns String;
+    action updateRequest(
+        requestId    : UUID,
+        status       : String,
+        poNumber     : String,
+        soNumber     : String,
+        fiNumber     : String,
+        errorMessage : String
+    ) returns String;
 
     //====================================================
     // SAP Integration Actions
     //====================================================
 
-    action   createPurchaseOrder(requestId: UUID)           returns String;
-    action   getSalesOrder(poNumber: String)                returns String;
-    action   createFinanceDocument(requestId: UUID)         returns String;
+    action createPurchaseOrder(requestId : UUID ) returns String;
+    action getSalesOrder(poNumber : String) returns String;
+    action createFinanceDocument(requestId : UUID) returns String;
 
     //====================================================
     // Email Actions

@@ -273,6 +273,13 @@ sap.ui.define([
                 console.error(err);
             }
         },
+        dataRequested: function () {
+            sap.ui.core.BusyIndicator.show(0);
+        },
+
+        dataReceived: function () {
+            sap.ui.core.BusyIndicator.hide();
+        },
         onPressContactF4: function (oEvent) {
             this.contactInput = oEvent.getSource();
             if (!this.contactDialog) {

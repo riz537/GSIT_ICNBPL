@@ -90,6 +90,11 @@ type SAPEnablementStatus     : String enum {
     FI_JV;
     NON;
 }
+type SalesOrderResponse {
+    salesOrderNumber : String;
+    ICARDocument     : String;
+    ICAPDocument     : String;
+}
 
 /* =========================
    ROOT ENTITY
@@ -168,10 +173,10 @@ entity ICNPBRequest : cuid, managed {
     salesOrderNumber              : String(10);
 
     fiJournalVoucherNumber        : String(10);
+    ICARDocument                  : String(10);
+    ICAPDocument                    : String(10);
     fiFiscalYear                  : String(4);
 
-    billingDocumentNumber         : String(10);
-    fb60Number                    : String(10);
 
     accountingExceptionNote       : String(500);
     errorMessage                  : String(500);
@@ -182,6 +187,7 @@ entity ICNPBRequest : cuid, managed {
     approvalHistory               : Composition of many ICNPBApprovalHistory
                                         on approvalHistory.request = $self;
     workflowInstanceId            : String(100);
+    taskId : String(100);
 }
 
 /* =========================

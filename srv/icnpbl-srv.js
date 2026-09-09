@@ -65,7 +65,10 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       req.data.status = 'DRAFT';
     });
     this.before('CREATE', ICNPBAttachment, async req => {
-      req.data.uploadUrl = "https://lly-sbx-playground-gsit-icnpbl-srv.cfapps.us10.hana.ondemand.com/odata/v4/ic-npbl/ICNPBAttachment(" + req.data.ID + ")/fileContent";
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      const host = req.headers['x-forwarded-host'] || req.headers.host;
+      const origin = `${protocol}://${host}`;
+      req.data.uploadUrl = origin + "/GSIT_ICNPBLservice.comui5llyicnpblicnpblapp/odata/v4/ic-npbl/ICNPBAttachment(" + req.data.ID + ")/fileContent";
     });
 
     this.on('getBillingSubTypes', async (req) => {
@@ -227,12 +230,14 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       }
     });
     this.on("updateRequest", async req => {
-      const { requestId, status, poNumber, soNumber, fiNumber, errorMessage } = req.data;
+      const { requestId, status, poNumber, soNumber, fiNumber, ICARDocument, ICAPDocument, errorMessage } = req.data;
       const payload = {};
       if (status) payload.status = status;
       if (poNumber) payload.purchaseOrderNumber = poNumber;
       if (soNumber) payload.salesOrderNumber = soNumber;
       if (fiNumber) payload.fiNumber = fiNumber;
+      if (ICARDocument) payload.ICARDocument = ICARDocument;
+      if (ICAPDocument) payload.ICAPDocument = ICAPDocument;
       if (errorMessage) payload.errorMessage = errorMessage;
       await UPDATE(ICNPBRequest).set(payload).where({ ID: requestId });
       return "SUCCESS";
@@ -334,9 +339,13 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         });
         console.log("SO Response --->");
         console.log(JSON.stringify(soResult));
-        const soNumber = soResult?.[0]?.SalesOrder;
-        if (!soNumber) return "ERROR";
-        return soNumber;
+        const soAPIRes = soResult?.[0];
+        if (!soAPIRes) return "ERROR";
+        return {
+          salesOrderNumber: soAPIRes.SalesOrder,
+          ICARDocument: soAPIRes.ICARDocument,
+          ICAPDocument: soAPIRes.ICAPDocument
+        };
       } catch (error) {
         console.error("SO FETCH FAILED");
         console.error(error);
@@ -347,7 +356,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       const { requestId } = req.data;
       const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
       if (!request) return "ERROR";
-      
+
       const markupInfo = await SELECT.one.from(MarkupDerivation).where({ billingSubType: request.billingSubType });
       const billDate = new Date(request.billAtDate);
       const yyyy = billDate.getFullYear().toString();
@@ -371,7 +380,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
             GlAccount: leftPad(markupInfo.fb01Debit, 10),
             ItemText: request.billingDescription,
             BusArea: "A",
-            TradeId: leftPad(request.receivingAffiliateCompanyCode,6),
+            TradeId: leftPad(request.receivingAffiliateCompanyCode, 6),
             SalesOrd: leftPad(request.salesOrderNumber, 10),
             SOrdItem: "000010"
           },
@@ -380,7 +389,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
             GlAccount: leftPad(request.billingAffiliateCostElement, 10),
             ItemText: request.billingDescription,
             BusArea: "A",
-            TradeId: leftPad(request.receivingAffiliateCompanyCode,6),
+            TradeId: leftPad(request.receivingAffiliateCompanyCode, 6),
             CostCenter: leftPad(request.billingAffiliateCostCenter, 10)
           }
         ],
@@ -388,12 +397,12 @@ module.exports = class IcNpblService extends cds.ApplicationService {
           {
             ItemnoAcc: "0000000001",
             Currency: request.currencyLocal,
-            AmtDoccur: Number(request.actualAmountLocal ).toFixed(3)
+            AmtDoccur: Number(request.actualAmountLocal).toFixed(3)
           },
           {
             ItemnoAcc: "0000000002",
             Currency: request.currencyLocal,
-            AmtDoccur: ( Number(request.actualAmountLocal) * -1).toFixed(3)
+            AmtDoccur: (Number(request.actualAmountLocal) * -1).toFixed(3)
           }
         ]
       };
@@ -436,15 +445,26 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       }
     });
     this.on("sendApproverEmail", async req => {
+      console.log("ZZZZZZZZZZ SEND APPROVERRRRR EMAIL ZZZZZZZZZ");
       const { requestId } = req.data;
       const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
       if (!request) return "ERROR";
+      //let taskId = request.taskId;
+      //console.log("taskId"); console.log(taskId);
+      // if (!taskId) {
+      //   taskId = await getTaskId(request.workflowInstanceId);
+      //   //await UPDATE(ICNPBRequest).set({ taskId }).where({ ID: requestId });
+      // }
+      // const inboxUrl =
+      //   `https://lly-sbx.us10.process-automation.build.cloud.sap/comsapspaprocessautomation.comsapspainbox/inbox.html#/detail/NA/${taskId}/TaskCollection(SAP__Origin='NA',InstanceID='${taskId}')`;
+      
+      const inboxUrl = "https://lly-sbx.launchpad.cfapps.us10.hana.ondemand.com/site/demo#WorkflowTask-DisplayMyInbox";
       const { approverName } = await getUserNames(request);
       try {
         await sendEmail(
           request.receivingAffiliateContact,
           `Approval Required - ${request.requestNumber}`,
-          buildApproverEmail(request, approverName)
+          buildApproverEmail(request, approverName, inboxUrl)
         );
         return "SUCCESS";
       } catch (error) {
@@ -506,6 +526,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
     const leftPad = (value, length) => String(value).padStart(length, "0");
     //reusable function to trigger email
     const sendEmail = async (to, subject, body) => {
+      console.log("YYYYYYYYY SEND EMAIL YYYYYYYYYY");
       const payload = [{
         TO: to,
         Subject: subject,
@@ -566,7 +587,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
             </p>
             `;
     };
-    function buildApproverEmail(request, approverName) {
+    function buildApproverEmail(request, approverName, inboxUrl) {
       return `
               <p>Hi ${approverName},</p>
 
@@ -587,7 +608,9 @@ module.exports = class IcNpblService extends cds.ApplicationService {
               <p>
               Please review the request in My Inbox.
               </p>
-
+              <p>
+                <a href="${inboxUrl}"> Open My Inbox</a>
+              </p>
               <p>
               Thanks,<br>
               ICNPB Support Team
@@ -606,7 +629,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
             <b>Request Number:</b> ${request.requestNumber}<br>
             <b>Status:</b> Approved
             </p>
-
+            
             <p>
             Thanks,<br>
             ICNPB Support Team
@@ -658,14 +681,49 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         </p>
     `;
     };
-    const getUserNames = async (request) => {
+    const getTaskId = async (workflowInstanceId) => {
+      try {
+        console.log("workflowInstanceId--->" + workflowInstanceId);
+        const bpaAPI = await cds.connect.to("bpa_dest");
+        const result = await bpaAPI.send({
+          method: "GET",
+          path: "/workflow/rest/v1/task-instances?$orderby=createdAt desc"
+        });
 
+        const task = result.find(
+          t => t.workflowInstanceId === workflowInstanceId
+        );
+
+        console.log("MATCHED TASK");
+        console.log(JSON.stringify(task));
+
+        console.log("================================");
+        console.log("TYPE OF RESULT");
+        console.log(typeof result);
+
+        console.log("RAW RESULT");
+        console.dir(result);
+
+        console.log("STRINGIFIED RESULT");
+        console.log(JSON.stringify(result));
+
+        console.log("================================");
+        if (result.length > 0) {
+          return result[0].id;
+        }
+        return null;
+      } catch (error) {
+        console.log("TASK API RESPONSE FAILED");
+        console.log(error);
+      }
+
+    };
+    const getUserNames = async (request) => {
       const submitter = await SELECT.one
         .from(Users)
         .where({
           emailId: request.createdBy
         });
-
       const approver = await SELECT.one
         .from(Users)
         .where({
