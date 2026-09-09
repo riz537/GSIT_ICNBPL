@@ -398,12 +398,12 @@ module.exports = class IcNpblService extends cds.ApplicationService {
           {
             ItemnoAcc: "0000000001",
             Currency: request.currencyLocal,
-            AmtDoccur: Number(request.actualAmountLocal).toFixed(3)
+            AmtDoccur: Number(request.totalAmountLocal).toFixed(3)
           },
           {
             ItemnoAcc: "0000000002",
             Currency: request.currencyLocal,
-            AmtDoccur: (Number(request.actualAmountLocal) * -1).toFixed(3)
+            AmtDoccur: (Number(request.totalAmountLocal) * -1).toFixed(3)
           }
         ]
       };

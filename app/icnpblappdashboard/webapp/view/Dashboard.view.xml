@@ -106,7 +106,7 @@
                     <Text text="Date"/>
                 </Column>
 
-                <Column width="15em">
+                <Column width="12em">
                     <Text text="Status"/>
                     
                 </Column>
