@@ -140,6 +140,7 @@ sap.ui.define([
             }
 
             const aFilters = [
+                new sap.ui.model.Filter("requestNumber", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
                 new sap.ui.model.Filter("purchaseOrderNumber", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
                 new sap.ui.model.Filter("salesOrderNumber", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
                 new sap.ui.model.Filter("fiJournalVoucherNumber", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
@@ -149,6 +150,9 @@ sap.ui.define([
                 new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
                 new sap.ui.model.Filter("billingSubType", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
                 new sap.ui.model.Filter("billingAffiliateCompanyCode", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
+                new sap.ui.model.Filter("ICARDocument", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
+                new sap.ui.model.Filter("ICAPDocument", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
+                new sap.ui.model.Filter("userId", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
                 new sap.ui.model.Filter("receivingAffiliateCompanyCode", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase()),
                 new sap.ui.model.Filter("billingAffiliateContact", sap.ui.model.FilterOperator.Contains, sValue.toUpperCase())
 
