@@ -63,7 +63,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       }
       req.data.requestNumber = `ICNBP-${year}-${String(nextNumber).padStart(6, '0')}`;
       req.data.status = 'DRAFT'; req.data.userId = req.user.id;
-      
+
     });
     this.before('CREATE', ICNPBAttachment, async req => {
       const protocol = req.headers['x-forwarded-proto'] || 'https';
@@ -328,6 +328,49 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         return "ERROR";
       }
     });
+
+
+    this.on("syncICARICAPDocs", async (req) => {
+
+      try {
+
+        const requests = await SELECT.from(ICNPBRequest)
+        .where(`ICARDocument IS NULL OR ICARDocument = '' OR ICAPDocument IS NULL OR ICAPDocument = ''`);
+
+        for (const record of requests) {
+
+          const poNumber = record.purchaseOrderNumber;
+
+          const s4Result = await trackingSrv.send({
+            method: "GET",
+            path: `/SalesDebitMemoFlow?$filter=PurchaseOrder eq '${poNumber}'`
+          });
+
+          const s4Data = s4Result?.[0];
+
+          if (!s4Data) {
+            continue;
+          }
+
+          await UPDATE(ICNPBRequest)
+          .set({
+              ICARDocument: s4Data.ICARDocument,
+              ICAPDocument: s4Data.ICAPDocument
+            })
+            .where({
+              purchaseOrderNumber: record.purchaseOrderNumber
+            });
+        }
+
+        return "SUCCESS";
+
+      } catch (error) {
+
+        console.error(error);
+        return "ERROR";
+      }
+    });
+
     this.on("getSalesOrder", async req => {
       const { poNumber } = req.data;
       if (!poNumber) return "ERROR";
@@ -446,7 +489,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       }
     });
     this.on("sendApproverEmail", async req => {
-      
+
       console.log("ZZZZZZZZZZ SEND APPROVERRRRR EMAIL ZZZZZZZZZ");
       const { requestId } = req.data;
       const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
@@ -455,7 +498,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       //console.log("taskId"); console.log(taskId);
       //if (!taskId) {
       //  taskId = await getTaskId(request.workflowInstanceId);
-        //await UPDATE(ICNPBRequest).set({ taskId }).where({ ID: requestId });
+      //await UPDATE(ICNPBRequest).set({ taskId }).where({ ID: requestId });
       //}
       // const inboxUrl =
       //   `https://lly-sbx.us10.process-automation.build.cloud.sap/comsapspaprocessautomation.comsapspainbox/inbox.html#/detail/NA/${taskId}/TaskCollection(SAP__Origin='NA',InstanceID='${taskId}')`;

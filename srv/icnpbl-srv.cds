@@ -62,6 +62,7 @@ service IcNpblService {
 
     action createPurchaseOrder(requestId : UUID ) returns String;
     action getSalesOrder(poNumber : String) returns db.SalesOrderResponse;
+    action syncICARICAPDocs() returns String;
     action createFinanceDocument(requestId : UUID) returns String;
 
     //====================================================

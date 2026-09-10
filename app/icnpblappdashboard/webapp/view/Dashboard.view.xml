@@ -2,7 +2,7 @@
     displayBlock="true"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m">
-    <Page title="IC NPB Operations Dashboard">
+    <Page title="">
 
     <content>
 
@@ -112,6 +112,10 @@
                 </Column>
 
                 <Column width="10em">
+                    <Text text="Approver"/>
+                </Column>
+
+                <Column width="10em">
                     <Text text="Sales Order"/>
                 </Column>
 
@@ -137,6 +141,9 @@
                     <Text text="User"/>
                 </Column>
 
+                <Column width="10em">
+                    <Text text="Amount"/>
+                </Column>
 
             </columns>
 
@@ -161,7 +168,10 @@
                         <ObjectStatus
                             text="{status}"/>
                             <!-- state="{= ${status} === 'APPROVED' ? 'Success' :
-                                ${status} === 'DRAFT' ? 'Warning' : 'Information'}"/> -->
+                                ${status} === 'DRAFT' ? 'Warning' : 'Information'}"/> -->                      
+
+                        <Text text="{receivingAffiliateContact}"/>
+
 
                         <Text text="{salesOrderNumber}"/>
 
@@ -174,6 +184,10 @@
                         <Text text="{ICAPDocument}"/>
 
                         <Text text="{userId}"/>
+
+                        <Text text="{totalAmountCustomer} + {currencyCustomer}"/>
+
+
 
                     </cells>
 
