@@ -111,7 +111,7 @@
                     
                 </Column>
 
-                <Column width="10em">
+                <Column width="15em">
                     <Text text="Approver"/>
                 </Column>
 
@@ -185,7 +185,7 @@
 
                         <Text text="{userId}"/>
 
-                        <Text text="{totalAmountCustomer} + {currencyCustomer}"/>
+                        <Text text="{= ${totalAmountCustomer} + ' ' + ${currencyCustomer} }" />
 
 
 
