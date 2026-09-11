@@ -23,17 +23,17 @@
                             <core:Item text="Fixed asset billing request" key="FIXED_ASSET"/>
                         </items>
                     </ComboBox>
+                    <Label text="Billing Sub-Type" required="true" />
+                    <ComboBox items="{viewModel>/value}" selectionChange="onSelBillingSubType" placeholder="— Select billing sub-type —" selectedKey="{requestModel>/billingSubType}">
+                        <items>
+                            <core:Item key="{viewModel>billingSubType}" text="{viewModel>billingSubType}" />
+                        </items>
+                    </ComboBox>
                     <Label text="Billing Option" required="true" />
                     <ComboBox placeholder="— Select billing option —" selectedKey="{requestModel>/billingOption}">
                         <items>
                             <core:Item text="Single event" key="SINGLE"/>
                             <core:Item text="Multiple events" key="RECURRING"/>
-                        </items>
-                    </ComboBox>
-                    <Label text="Billing Sub-Type" required="true" />
-                    <ComboBox items="{viewModel>/value}" selectionChange="onSelBillingSubType" placeholder="— Select billing sub-type —" selectedKey="{requestModel>/billingSubType}">
-                        <items>
-                            <core:Item key="{viewModel>billingSubType}" text="{viewModel>billingSubType}" />
                         </items>
                     </ComboBox>
                     <Label text="Billing Description" />
@@ -189,7 +189,7 @@
             </Panel>
             <Panel headerText="Comments &amp; History" class="sapUiSmallMargin" width="auto" expandable="true" expanded="true">
                 <CheckBox id="oChBSpclInstr"  text="Please check this box if there are special accounting instructions that need to be followed by the exceptions handling team "></CheckBox>
-                <TextArea rows="4" width="100%" value="{requestModel>/comments}"></TextArea>
+                <TextArea id="oTAComments" rows="4" width="100%" value="{requestModel>/comments}"></TextArea>
             </Panel>
         </content>
         <footer>

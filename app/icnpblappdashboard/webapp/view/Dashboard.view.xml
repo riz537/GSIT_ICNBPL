@@ -75,7 +75,7 @@
       <ScrollContainer horizontal="true" vertical="true" width="100%" height="70%">
       
      
-        <Table
+        <Table sticky="ColumnHeaders"
             id="requestTable"
             items="{/ICNPBRequest}">
 
@@ -114,17 +114,12 @@
                 <Column width="15em">
                     <Text text="Approver"/>
                 </Column>
-
+                 <Column width="10em">
+                    <Text text="Purchase Order"/>
+                </Column>
                 <Column width="10em">
                     <Text text="Sales Order"/>
                 </Column>
-
-                
-                <Column width="10em">
-                    <Text text="Purchase Order"/>
-                </Column>
-
-                
                 <Column width="10em">
                     <Text text="Voucher Number"/>
                 </Column>
@@ -135,6 +130,9 @@
 
                 <Column width="10em">
                     <Text text="AP Document"/>
+                </Column>
+                <Column width="10em">
+                    <Text text="Error Message"/>
                 </Column>
 
                 <Column width="15em">
@@ -171,18 +169,18 @@
                                 ${status} === 'DRAFT' ? 'Warning' : 'Information'}"/> -->                      
 
                         <Text text="{receivingAffiliateContact}"/>
-
+                        <Text text="{purchaseOrderNumber}"/>
 
                         <Text text="{salesOrderNumber}"/>
 
-                        <Text text="{purchaseOrderNumber}"/>
+                        
 
                         <Text text="{fiJournalVoucherNumber}"/>
 
                         <Text text="{ICARDocument}"/>
 
                         <Text text="{ICAPDocument}"/>
-
+                        <Text text="{errorMessage}"/>
                         <Text text="{userId}"/>
 
                         <Text text="{= ${totalAmountCustomer} + ' ' + ${currencyCustomer} }" />

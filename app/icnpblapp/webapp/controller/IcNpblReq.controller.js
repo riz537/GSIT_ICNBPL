@@ -15,6 +15,7 @@ sap.ui.define([
             this.viewModel = new JSONModel();
             this.getView().setModel(this.viewModel, "viewModel");
             this.requestModel = new JSONModel();
+            this.requestModel.setProperty("/markupPercent",0);
             this.getView().setModel(this.requestModel, "requestModel");
         },
         onSelBilTiming: function (oEvent) {
@@ -437,6 +438,7 @@ sap.ui.define([
         },
         saveRequest: async function () {
             var payload = this.getView().getModel("requestModel").getData();
+            payload.comments = payload.comments || "";
             var oModel = this.getView().getModel();
             payload.specialInstructionsFlag = this.byId("oChBSpclInstr").getSelected() ? 'Y' : 'N';
             if (this.byId("oRBGBillTiming").getSelectedIndex() === 0) {
@@ -451,10 +453,12 @@ sap.ui.define([
             const oListBinding = oModel.bindList("/ICNPBRequest");
             const oContext = oListBinding.create(payload);
             await oContext.created();
+            console.log("checking context");console.log(oContext.getObject());
             const requestId = oContext.getProperty("ID");
+            const requestNo = oContext.getProperty("requestNumber");
             this._requestId = requestId;
             await this.uploadAttachment(requestId);
-            return requestId;
+            return oContext;
 
         },
         onPressSave: async function () {
@@ -469,18 +473,45 @@ sap.ui.define([
         onPressSubmit: async function () {
             sap.ui.core.BusyIndicator.show(0);
             try {
-                const requestId = await this.saveRequest();
+                const oContext = await this.saveRequest();
                 const oModel = this.getView().getModel();
                 const oAction = oModel.bindContext("/submitForApproval(...)");
-                oAction.setParameter("requestId", requestId);
+                oAction.setParameter("requestId", oContext.getProperty("ID"));
                 await oAction.execute();
-                sap.m.MessageBox.success("Submitted for Approval");
+                //const result = oAction.getBoundContext().getObject().value;
+                //if(result === "SUCCESS"){
+                    this.clearForm();
+                   this.openReqDetails(oContext);
+                //}else{
+                //    sap.m.MessageBox.error("Oops..! Some error occured during the submission");
+                //}
+                //sap.m.MessageBox.success("ICNPB Request - "+requestNo+" Submitted for Approval");
                 sap.ui.core.BusyIndicator.hide();
             } catch (oError) {
                 sap.ui.core.BusyIndicator.hide();
-                console.log(oError.message);
+                console.log("submission failed"); console.log(oError.message);
                 sap.m.MessageBox.error(oError.message);
             }
+        },
+        openReqDetails: function (oContext) {
+            if (!this.reqDialog) {
+                this.reqDialog = sap.ui.xmlfragment(this.getView().getId(), "com.ui5.lly.icnpbl.icnpblapp.Fragments.ReqDetails", this);
+                this.getView().addDependent(this.reqDialog);
+            }
+            this.reqDialog.open();
+            this.reqDialog.setBindingContext(oContext);
+           
+        },
+        onCloseReqDialog: function () {
+            this.reqDialog.close();
+            window.location.hash = "Shell-home";
+        },
+        clearForm:function(){
+            this.requestModel.setData({});
+            this.byId("oRBGBillTiming").setSelectedIndex(-1);
+            this.byId("oChBSpclInstr").setSelected(false);
+            this.byId("oTAComments").setValue("");
+            this.requestModel.refresh(true);
         }
 
 

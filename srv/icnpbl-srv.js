@@ -17,13 +17,6 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       console.log(JSON.stringify(req.query, null, 2));
       return mdSrv.run(req.query);
     });
-
-    // this.on('CREATE', A_PurchaseOrder, async req => {
-    //   console.log("Inside CREATE --> A_PurchaseOrder");
-    //   console.log(JSON.stringify(req.query, null, 2));
-    //   return poSrv.run(req.query);
-    // });
-
     this.on('getExchangeRate', async req => {
       const { sourceAmount, sourceCurrency, targetCurrency } = req.data;
       const today = new Date().toISOString().split('T')[0];
@@ -221,13 +214,8 @@ module.exports = class IcNpblService extends cds.ApplicationService {
           });
         return "SUCCESS";
       } catch (error) {
-        console.log("inside error");
-        console.log(error);
-        if (error.reason?.response) {
-          console.log("HTTP Status code:" + error.reason.response.status);
-          console.log("Response Details:" + error.reason.response.data);
-          return "ERROR";
-        }
+        const errorMessage = await saveErrorMessage(requestId, error);
+        req.error(500, errorMessage);
       }
     });
     this.on("updateRequest", async req => {
@@ -239,6 +227,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       if (fiNumber) payload.fiJournalVoucherNumber = fiNumber;
       if (ICARDocument) payload.ICARDocument = ICARDocument;
       if (ICAPDocument) payload.ICAPDocument = ICAPDocument;
+      if (status && status !== "ERROR") payload.errorMessage = null;
       if (errorMessage) payload.errorMessage = errorMessage;
       await UPDATE(ICNPBRequest).set(payload).where({ ID: requestId });
       return "SUCCESS";
@@ -278,7 +267,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
           PurchaseOrder: "",
           PurchaseOrderItem: "1",
           AccountAssignmentCategory: "K",
-          TaxCode: "NA",
+          TaxCode: "",
           PurchaseOrderItemText: request.billingDescription,
           Plant: affiliateReceiving?.plant,
           SupplierMaterialNumber: sapMaterial,
@@ -320,13 +309,13 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         console.log(result);
 
         const poNumber = result.PurchaseOrder;
-        if (!poNumber) return "ERROR";
+        if (!poNumber) throw new Error("Purchase Order was not returned from S4");
         return poNumber;
       } catch (error) {
-        console.error("PO CREATION FAILED");
-        console.error(error);
+        await saveErrorMessage(requestId, error);
         return "ERROR";
       }
+
     });
 
 
@@ -335,7 +324,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       try {
 
         const requests = await SELECT.from(ICNPBRequest)
-        .where(`ICARDocument IS NULL OR ICARDocument = '' OR ICAPDocument IS NULL OR ICAPDocument = ''`);
+          .where(`ICARDocument IS NULL OR ICARDocument = '' OR ICAPDocument IS NULL OR ICAPDocument = ''`);
 
         for (const record of requests) {
 
@@ -353,7 +342,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
           }
 
           await UPDATE(ICNPBRequest)
-          .set({
+            .set({
               ICARDocument: s4Data.ICARDocument,
               ICAPDocument: s4Data.ICAPDocument
             })
@@ -372,7 +361,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
     });
 
     this.on("getSalesOrder", async req => {
-      const { poNumber } = req.data;
+      const { requestId, poNumber } = req.data;
       if (!poNumber) return "ERROR";
       await new Promise(resolve => setTimeout(resolve, 8000));
       try {
@@ -384,16 +373,19 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         console.log("SO Response --->");
         console.log(JSON.stringify(soResult));
         const soAPIRes = soResult?.[0];
-        if (!soAPIRes) return "ERROR";
+        if (!soAPIRes) throw new Error("Sales Order Number was not returned from S4");
         return {
           salesOrderNumber: soAPIRes.SalesOrder,
           ICARDocument: soAPIRes.ICARDocument,
           ICAPDocument: soAPIRes.ICAPDocument
         };
       } catch (error) {
-        console.error("SO FETCH FAILED");
-        console.error(error);
-        return "ERROR";
+        await saveErrorMessage(requestId, error);
+        return {
+          salesOrderNumber: "",
+          ICARDocument: "",
+          ICAPDocument: ""
+        };
       }
     });
     this.on("createFinanceDocument", async req => {
@@ -462,11 +454,10 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         console.log(JSON.stringify(result, null, 2));
 
         const fiNumber = result?.DocId;
-        if (!fiNumber) return "ERROR";
+        if (!fiNumber) throw new Error("FI Number was not returned from S4");
         return fiNumber;
       } catch (error) {
-        console.error("FINANCE POSTING FAILED");
-        console.error(error);
+        await saveErrorMessage(requestId, error);
         return "ERROR";
       }
     });
@@ -836,6 +827,40 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         approverName:
           approver?.displayName || request.receivingAffiliateContact
       };
+    };
+    const saveErrorMessage = async (requestId, error) => {
+      console.log("inside save eror Messgae --> Req Id" + requestId);
+      let errorMessage = "Unknown Error";
+      if (error?.reason?.response?.data?.error?.message?.value) {
+        errorMessage = error.reason.response.data.error.message.value;
+      }
+      else if (error?.reason?.response?.data) {
+        errorMessage =
+          typeof error.reason.response.data === "string"
+            ? error.reason.response.data
+            : JSON.stringify(error.reason.response.data);
+      }
+      else if (error?.message) {
+        errorMessage = error.message;
+      }
+      console.error("Captured Error:", errorMessage);
+      const rows = await cds.db.run(
+        UPDATE(ICNPBRequest)
+          .set({
+            status: "ERROR",
+            errorMessage: error.message
+          })
+          .where({
+            ID: requestId
+          })
+      );
+      console.log("Rows Updated =", rows);
+      console.log("requestId =", requestId);
+      const afterUpdate = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
+      console.log("After Update -->");
+      console.log(afterUpdate.status);
+      console.log(afterUpdate.errorMessage);
+      return errorMessage;
     };
     return super.init()
   }

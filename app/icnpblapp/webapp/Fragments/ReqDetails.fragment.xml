@@ -1,0 +1,17 @@
+<core:FragmentDefinition xmlns:core="sap.ui.core"
+    xmlns="sap.m">
+    <Dialog title="Request Details" contentHeight="37%" contentWidth="50%">
+        <ObjectHeader backgroundDesign="Solid" title="ICNPB Request No:{requestNumber}" number="{totalAmountCustomer}" numberUnit="{currencyCustomer}">
+            <attributes>
+               <ObjectAttribute title="Approver ID" text="{receivingAffiliateContact}"></ObjectAttribute>
+            </attributes>
+            <statuses>
+              <ObjectStatus text="PENDING_APPROVAL" state="Error"></ObjectStatus>
+            </statuses>
+        </ObjectHeader>
+        <endButton>
+            <Button text="OK" type="Emphasized" press="onCloseReqDialog"></Button>
+        </endButton>
+    </Dialog>
+
+</core:FragmentDefinition>
