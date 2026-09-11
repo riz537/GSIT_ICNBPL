@@ -2,7 +2,7 @@
     displayBlock="true"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m">
-    <Page title="">
+    <Page title="ICNPB Dashboard">
 
     <content>
 

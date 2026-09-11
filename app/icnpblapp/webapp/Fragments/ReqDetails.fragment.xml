@@ -1,7 +1,7 @@
 <core:FragmentDefinition xmlns:core="sap.ui.core"
     xmlns="sap.m">
     <Dialog title="Request Details" contentHeight="37%" contentWidth="50%">
-        <ObjectHeader backgroundDesign="Solid" title="ICNPB Request No:{requestNumber}" number="{totalAmountCustomer}" numberUnit="{currencyCustomer}">
+        <ObjectHeader backgroundDesign="Solid" title="Request No:{requestNumber}" number="{totalAmountCustomer}" numberUnit="{currencyCustomer}">
             <attributes>
                <ObjectAttribute title="Approver ID" text="{receivingAffiliateContact}"></ObjectAttribute>
             </attributes>

@@ -15,7 +15,7 @@ sap.ui.define([
             this.viewModel = new JSONModel();
             this.getView().setModel(this.viewModel, "viewModel");
             this.requestModel = new JSONModel();
-            this.requestModel.setProperty("/markupPercent",0);
+            this.requestModel.setProperty("/markupPercent", 0);
             this.getView().setModel(this.requestModel, "requestModel");
         },
         onSelBilTiming: function (oEvent) {
@@ -422,7 +422,6 @@ sap.ui.define([
                 request_ID: requestId,
                 fileName: file.name,
                 mimeType: file.type,
-                fileContent: base64Content,
                 uploadedAt: new Date().toISOString(),
             };
             const oModel = this.getView().getModel();
@@ -430,11 +429,21 @@ sap.ui.define([
                 const oBinding = oModel.bindList("/ICNPBAttachment");
                 const oContext = oBinding.create(payload);
                 await oContext.created();
+                const attachmentId = oContext.getProperty("ID");
+                await this._uploadFileContent(attachmentId);
             } catch (oError) {
                 console.error(oError);
                 sap.m.MessageBox.error("Upload Failed");
             }
 
+        },
+        _uploadFileContent: function (attachmentId) {
+            const oModel = this.getView().getModel();
+            console.log("attachmentId -->"+attachmentId);
+            console.log("service URL --->"+oModel.getServiceUrl());
+            var oFileUploader = this.byId("oFileUploader");
+            oFileUploader.setUploadUrl("/odata/v4/ic-npbl/ICNPBAttachment("+attachmentId+")/fileContent");
+            oFileUploader.upload();
         },
         saveRequest: async function () {
             var payload = this.getView().getModel("requestModel").getData();
@@ -453,7 +462,7 @@ sap.ui.define([
             const oListBinding = oModel.bindList("/ICNPBRequest");
             const oContext = oListBinding.create(payload);
             await oContext.created();
-            console.log("checking context");console.log(oContext.getObject());
+            console.log("checking context"); console.log(oContext.getObject());
             const requestId = oContext.getProperty("ID");
             const requestNo = oContext.getProperty("requestNumber");
             this._requestId = requestId;
@@ -480,8 +489,8 @@ sap.ui.define([
                 await oAction.execute();
                 //const result = oAction.getBoundContext().getObject().value;
                 //if(result === "SUCCESS"){
-                    this.clearForm();
-                   this.openReqDetails(oContext);
+                this.clearForm();
+                this.openReqDetails(oContext);
                 //}else{
                 //    sap.m.MessageBox.error("Oops..! Some error occured during the submission");
                 //}
@@ -500,13 +509,13 @@ sap.ui.define([
             }
             this.reqDialog.open();
             this.reqDialog.setBindingContext(oContext);
-           
+
         },
         onCloseReqDialog: function () {
             this.reqDialog.close();
             window.location.hash = "Shell-home";
         },
-        clearForm:function(){
+        clearForm: function () {
             this.requestModel.setData({});
             this.byId("oRBGBillTiming").setSelectedIndex(-1);
             this.byId("oChBSpclInstr").setSelected(false);
