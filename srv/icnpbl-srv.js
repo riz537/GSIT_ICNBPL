@@ -218,6 +218,54 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         req.error(500, errorMessage);
       }
     });
+
+    this.on('getBPAdetails', async req => {
+
+      console.log("inside getBPAdetails");
+
+      // const { requestNumber } = req.data;
+
+      // const workflow = await SELECT.one('workflowInstanceId')
+      //   .from(ICNPBRequest)
+      //   .where({ RequestNumber: reqNumber });
+
+      // const workflowId = workflow?.workflowInstanceId;
+
+      try {
+        const bpaAPI = await cds.connect.to("bpa_dest");
+
+        const workflowInstanceIdIP = "90874302-ad48-11f1-82a3-eeee0a966a09";
+
+        const workFlowRes = await bpaAPI.send({
+          method: "GET",
+          path: `/workflow/rest/v1/workflow-instances/${workflowInstanceIdIP}`
+        });
+
+        const executionlog = await bpaAPI.send({
+          method: "GET",
+          path: `/workflow/rest/v1/workflow-instances/${workflowInstanceIdIP}/execution-logs`
+        });
+
+        console.log("=== BPA Response start ===");
+        console.log("BPA Response = status", JSON.stringify(workFlowRes, null, 2));
+        console.log("BPA Response = executionlog", JSON.stringify(executionlog, null, 2));
+
+        console.log("=== BPA Response end ===");
+
+
+        // await UPDATE(newtabletostorebpadetails)
+
+        return "Success";
+      } catch (error) {
+        console.log(error);
+        if (error.reason?.response) {
+          console.log("HTTP Status code:" + error.reason.response.status);
+          console.log("Response Details:" + error.reason.response.data);
+          return "Error";
+        }
+      }
+    });
+
     this.on("updateRequest", async req => {
       const { requestId, status, poNumber, soNumber, fiNumber, ICARDocument, ICAPDocument, errorMessage } = req.data;
       const payload = {};

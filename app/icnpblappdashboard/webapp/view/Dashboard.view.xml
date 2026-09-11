@@ -2,7 +2,7 @@
     displayBlock="true"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m">
-    <Page title="ICNPB Dashboard">
+    <Page title="">
 
     <content>
 
@@ -64,9 +64,19 @@
         </HBox> -->
 
         <!-- Search -->
-        <SearchField
+  
+
+        <HBox
             width="100%"
-            search=".onSearch"/>
+            justifyContent="End"
+            class="sapUiSmallMarginBottom">
+
+            <SearchField
+                width="80%"
+                search=".onSearch"/>
+            <!-- <Button text="BPAdetails" press=".ongetBPA"/> -->
+
+        </HBox>
 
             <!-- <DatePicker
     change=".onDateFilter" /> -->
@@ -77,6 +87,7 @@
      
         <Table sticky="ColumnHeaders"
             id="requestTable"
+            class="highlightTable"
             items="{/ICNPBRequest}">
 
             <columns>

@@ -6,6 +6,10 @@
     background:#f5f6f7;
 }
 
+.highlightTable {
+    border: 1px solid #cdd4da;
+    border-radius: 4px;
+}
 
 
 .kpiValue{

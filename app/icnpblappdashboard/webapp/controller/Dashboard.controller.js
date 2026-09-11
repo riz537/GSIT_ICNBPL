@@ -127,6 +127,19 @@ sap.ui.define([
         //         ]);
         // },
 
+        ongetBPA: async function () {
+
+            const oModel = this.getView().getModel();
+
+            const oAction = oModel.bindContext("/getBPAdetails(...)");
+
+            await oAction.execute();
+
+            const oData = oAction.getBoundContext().getObject();
+
+            console.log(oData);
+        },
+
         onSearch: function (oEvent) {
             const sValue = oEvent.getParameter("newValue") ||
                 oEvent.getParameter("query");
