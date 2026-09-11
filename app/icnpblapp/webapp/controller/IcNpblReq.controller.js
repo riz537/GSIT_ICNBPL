@@ -417,7 +417,7 @@ sap.ui.define([
                 return;
             }
             const file = this._selectedFile;
-            const base64Content = await this._readFileAsBase64(file);
+            //const base64Content = await this._readFileAsBase64(file);
             const payload = {
                 request_ID: requestId,
                 fileName: file.name,
@@ -439,10 +439,18 @@ sap.ui.define([
         },
         _uploadFileContent: function (attachmentId) {
             const oModel = this.getView().getModel();
-            console.log("attachmentId -->"+attachmentId);
-            console.log("service URL --->"+oModel.getServiceUrl());
+            console.log("attachmentId -->" + attachmentId);
+            console.log("service URL --->" + oModel.getServiceUrl());
             var oFileUploader = this.byId("oFileUploader");
-            oFileUploader.setUploadUrl("/odata/v4/ic-npbl/ICNPBAttachment("+attachmentId+")/fileContent");
+            oFileUploader.removeAllHeaderParameters();
+            const token =this.getView().getModel().getHttpHeaders()["X-CSRF-Token"];
+            oFileUploader.addHeaderParameter(
+                new sap.ui.unified.FileUploaderParameter({
+                    name: "X-CSRF-Token",
+                    value: token
+                })
+            );
+            oFileUploader.setUploadUrl("/GSIT_ICNPBLservice.comui5llyicnpblicnpblapp/odata/v4/ic-npbl/ICNPBAttachment(" + attachmentId + ")/fileContent");
             oFileUploader.upload();
         },
         saveRequest: async function () {
