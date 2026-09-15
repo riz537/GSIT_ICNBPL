@@ -4,7 +4,7 @@ const { SELECT } = require('@sap/cds/lib/ql/cds-ql');
 module.exports = class IcNpblService extends cds.ApplicationService {
   async init() {
 
-    const { ICNPBAttachment, ICCustomer, ICVendor, CostCenter, ICNPBRequest, Users, BillingTypes, BillingSubTypeDerivation, AffiliateMaster, MarkupDerivation } = cds.entities('IcNpblService')
+    const { ICNPBAttachment, ICCustomer, ICVendor, CostCenter, ICNPBRequest, ICNPBApprovalHistory, Users, BillingTypes, BillingSubTypeDerivation, AffiliateMaster, MarkupDerivation } = cds.entities('IcNpblService')
 
     const mdSrv = await cds.connect.to('masterdata_edmx');
     const poSrv = await cds.connect.to('API_PURCHASEORDER_PROCESS_SRV_edmx');
@@ -154,15 +154,24 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       const submitterUser = await SELECT.one.from(Users).where({ emailId: request.createdBy });
       const autoApprove = submitterUser?.taxSubmitter === "Yes" && isEOMMinus5ToEOM();
       console.log("Auto Approve Flag --->", autoApprove);
+      const { submitterName, approverName } = await getUserNames(request);
+      const billingAffiliate = await SELECT.one.from(AffiliateMaster).where({ companyCode: request.billingAffiliateCompanyCode });
+      const receivingAffiliate = await SELECT.one.from(AffiliateMaster).where({ companyCode: request.receivingAffiliateCompanyCode });
+      const fiOnly = billingAffiliate?.postingPath === "FI_ONLY" || receivingAffiliate?.postingPath === "FI_ONLY";
 
+      console.log("FI_ONLY Flag -->", fiOnly);
 
       // BPA payload
       const payload = {
         "definitionId": "us10.lly-sbx.icnpb.iCNPBProcess",
         "context": {
           "autoApprove": autoApprove,
+          "fiOnly": fiOnly,
           "requestId": requestId,
           "requestNumber": request.requestNumber,
+          "loggedInUser": request.createdBy,
+          "submitterName": submitterName,
+          "approverName": approverName,
           "billingType": request.billingType,
           "billingOption": request.billingOption,
           "billingSubType": request.billingSubType,
@@ -220,41 +229,28 @@ module.exports = class IcNpblService extends cds.ApplicationService {
     });
 
     this.on('getBPAdetails', async req => {
-
       console.log("inside getBPAdetails");
-
       // const { requestNumber } = req.data;
-
       // const workflow = await SELECT.one('workflowInstanceId')
       //   .from(ICNPBRequest)
       //   .where({ RequestNumber: reqNumber });
-
       // const workflowId = workflow?.workflowInstanceId;
-
       try {
         const bpaAPI = await cds.connect.to("bpa_dest");
-
         const workflowInstanceIdIP = "90874302-ad48-11f1-82a3-eeee0a966a09";
-
         const workFlowRes = await bpaAPI.send({
           method: "GET",
           path: `/workflow/rest/v1/workflow-instances/${workflowInstanceIdIP}`
         });
-
         const executionlog = await bpaAPI.send({
           method: "GET",
           path: `/workflow/rest/v1/workflow-instances/${workflowInstanceIdIP}/execution-logs`
         });
-
         console.log("=== BPA Response start ===");
         console.log("BPA Response = status", JSON.stringify(workFlowRes, null, 2));
         console.log("BPA Response = executionlog", JSON.stringify(executionlog, null, 2));
-
         console.log("=== BPA Response end ===");
-
-
         // await UPDATE(newtabletostorebpadetails)
-
         return "Success";
       } catch (error) {
         console.log(error);
@@ -280,7 +276,24 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       await UPDATE(ICNPBRequest).set(payload).where({ ID: requestId });
       return "SUCCESS";
     });
-
+    this.on("addApprovalHistory", async req => {
+      const {
+        requestId,
+        action,
+        actor,
+        actorRole,
+        comments
+      } = req.data;
+      await INSERT.into(ICNPBApprovalHistory).entries({
+        request_ID: requestId,
+        action,
+        actor,
+        actorRole,
+        comments,
+        timestamp: new Date()
+      });
+      return "SUCCESS";
+    });
     this.on('createPurchaseOrder', async req => {
       const { requestId } = req.data;
       const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
@@ -368,36 +381,44 @@ module.exports = class IcNpblService extends cds.ApplicationService {
 
 
     this.on("syncICARICAPDocs", async (req) => {
-
       try {
-
         const requests = await SELECT.from(ICNPBRequest)
           .where(`ICARDocument IS NULL OR ICARDocument = '' OR ICAPDocument IS NULL OR ICAPDocument = ''`);
-
         for (const record of requests) {
-
           const poNumber = record.purchaseOrderNumber;
-
           const s4Result = await trackingSrv.send({
             method: "GET",
             path: `/SalesDebitMemoFlow?$filter=PurchaseOrder eq '${poNumber}'`
           });
-
           const s4Data = s4Result?.[0];
-
-          if (!s4Data) {
+          if (s4Data && s4Data.ICARDocument !== "" && s4Data.ICAPDocument !== "") {
+            await UPDATE(ICNPBRequest)
+              .set({
+                ICARDocument: s4Data.ICARDocument,
+                ICAPDocument: s4Data.ICAPDocument
+              })
+              .where({
+                purchaseOrderNumber: record.purchaseOrderNumber
+              });
+            await INSERT.into(ICNPBApprovalHistory).entries({
+              request_ID: record.ID,
+              action: "ICAR_CREATED",
+              actor: "SYSTEM",
+              comments: s4Data.ICARDocument,
+              timestamp: new Date()
+            });
+            await INSERT.into(ICNPBApprovalHistory).entries({
+              request_ID: record.ID,
+              action: "ICAP_CREATED",
+              actor: "SYSTEM",
+              comments: s4Data.ICAPDocument,
+              timestamp: new Date()
+            });
+          } else {
             continue;
           }
-
-          await UPDATE(ICNPBRequest)
-            .set({
-              ICARDocument: s4Data.ICARDocument,
-              ICAPDocument: s4Data.ICAPDocument
-            })
-            .where({
-              purchaseOrderNumber: record.purchaseOrderNumber
-            });
         }
+
 
         return "SUCCESS";
 
@@ -509,6 +530,137 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         return "ERROR";
       }
     });
+    this.on("createICARDocument", async req => {
+      const { requestId } = req.data;
+      const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
+      if (!request) {
+        return "ERROR";
+      }
+      const receivingAffiliate = await SELECT.one.from(AffiliateMaster).where({ companyCode: request.receivingAffiliateCompanyCode });
+      const billDate = new Date(request.billAtDate);
+      const yyyy = billDate.getFullYear().toString();
+      const mm = String(billDate.getMonth() + 1).padStart(2, "0");
+      const dd = String(billDate.getDate()).padStart(2, "0");
+      const sapDate = `${yyyy}${mm}${dd}`;
+      const payload = {
+        Username: "ICOUSER",
+        HeaderTxt: request.requestNumber,
+        CompCode: request.billingAffiliateCompanyCode,
+        DocDate: sapDate,
+        PstngDate: sapDate,
+        TransDate: sapDate,
+        FiscYear: yyyy,
+        FisPeriod: mm,
+        DocType: "ZR",
+        RefDocNo: request.requestNumber,
+        ToAccountGL: [{
+          ItemnoAcc: "0000000001",
+          GlAccount: leftPad(request.billingAffiliateCostElement, 10),
+          ItemText: request.billingDescription,
+          BusArea: "A",
+          TradeId: leftPad(request.receivingAffiliateCompanyCode, 6),
+          CostCenter: leftPad(request.billingAffiliateCostCenter, 10)
+        }],
+        ToAccountReceivable: [{
+          ItemnoAcc: "0000000002",
+          Customer: receivingAffiliate?.aCust,
+          ItemText: request.billingDescription,
+          BusArea: "A"
+        }],
+        ToCurrencyAmount: [{
+          ItemnoAcc: "0000000001",
+          Currency: request.currencyLocal,
+          AmtDoccur: (Number(request.totalAmountLocal) * -1).toFixed(3)
+        },
+        {
+          ItemnoAcc: "0000000002",
+          Currency: request.currencyLocal,
+          AmtDoccur: Number(request.totalAmountLocal).toFixed(3)
+        }]
+      };
+      console.log("ICAR Payload -->");
+      console.log(JSON.stringify(payload, null, 2));
+      try {
+        const result = await financeSrv.send({
+          method: "POST",
+          path: "/PostHeaderSet",
+          data: payload
+        });
+        console.log("ICAR Response");
+        console.log(JSON.stringify(result));
+        const ICARDocument = result?.DocId;
+        if (!ICARDocument) throw new Error("ICAR Document Number not returned");
+        return ICARDocument;
+      } catch (error) {
+        await saveErrorMessage(requestId, error);
+        return "ERROR";
+      }
+    });
+    this.on("createICAPDocument", async req => {
+      const {requestId,ICARDocument} = req.data;
+      const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
+      if (!request) {
+        return "ERROR";
+      }
+      const billingAffiliate = await SELECT.one.from(AffiliateMaster).where({companyCode: request.billingAffiliateCompanyCode});
+      const billDate = new Date(request.billAtDate);
+      const yyyy = billDate.getFullYear().toString();
+      const mm = String(billDate.getMonth() + 1).padStart(2, "0");
+      const dd = String(billDate.getDate()).padStart(2, "0");
+      const sapDate = `${yyyy}${mm}${dd}`;
+      const payload = {
+        Username: "ICOUSER",
+        HeaderTxt: request.requestNumber,
+        CompCode: request.receivingAffiliateCompanyCode,
+        DocDate: sapDate,
+        PstngDate: sapDate,
+        TransDate: sapDate,
+        FiscYear: yyyy,
+        FisPeriod: mm,
+        DocType: "ZR",
+        RefDocNo: ICARDocument,
+        ToAccountGL: [{
+          ItemnoAcc: "0000000001",
+          GlAccount: leftPad(request.receivingAffiliateCostElement,10),
+          ItemText: request.billingDescription,
+          BusArea: "A",
+          CostCenter: leftPad(request.receivingAffiliateCostCenter, 10 )
+        }],
+        ToAccountPayable: [{
+          ItemnoAcc: "0000000002",
+          VendorNo: billingAffiliate?.aVend,
+          ItemText: request.billingDescription,
+          BusArea: "A"
+        }],
+        ToCurrencyAmount: [{
+          ItemnoAcc: "0000000001",
+          Currency:request.currencyCustomer,
+          AmtDoccur: Number( request.totalAmountCustomer).toFixed(3)
+        },
+        {
+          ItemnoAcc: "0000000002",
+          Currency: request.currencyCustomer,
+          AmtDoccur:(Number(request.totalAmountCustomer) * -1).toFixed(3)
+        }]
+      };
+      console.log("ICAP Payload -->");
+      console.log(JSON.stringify(payload));
+      try {
+        const result = await financeSrv.send({
+          method: "POST",
+          path: "/PostHeaderSet",
+          data: payload
+        });
+        console.log("ICAP Response");
+        console.log(JSON.stringify(result));
+        const ICAPDocument = result?.DocId;
+        if (!ICAPDocument)  throw new Error(  "ICAP Document Number not returned" );
+        return ICAPDocument;
+      } catch (error) {
+        await saveErrorMessage( requestId, error);
+        return "ERROR";
+      }
+    });
 
     this.on("sendSubmitterEmail", async req => {
       const { requestId } = req.data;
@@ -598,7 +750,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       try {
         await sendEmail(
           request.createdBy,
-          `Purchase Order Created - ${poNumber}`,
+          `${request.requestNumber} POSTED`,
           buildPOEmail(request, submitterName, poNumber)
         );
         return "SUCCESS";
@@ -902,12 +1054,6 @@ module.exports = class IcNpblService extends cds.ApplicationService {
             ID: requestId
           })
       );
-      console.log("Rows Updated =", rows);
-      console.log("requestId =", requestId);
-      const afterUpdate = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
-      console.log("After Update -->");
-      console.log(afterUpdate.status);
-      console.log(afterUpdate.errorMessage);
       return errorMessage;
     };
     return super.init()

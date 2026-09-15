@@ -66,32 +66,25 @@
         <!-- Search -->
   
 
-        <HBox
-            width="100%"
-            justifyContent="End"
-            class="sapUiSmallMarginBottom">
-
-            <SearchField
-                width="80%"
-                search=".onSearch"/>
-            <!-- <Button text="BPAdetails" press=".ongetBPA"/> -->
-
-        </HBox>
+        
 
             <!-- <DatePicker
     change=".onDateFilter" /> -->
 
         <!-- Request Table -->
       <ScrollContainer horizontal="true" vertical="true" width="100%" height="70%">
-      
-     
         <Table sticky="ColumnHeaders"
             id="requestTable"
             class="highlightTable"
             items="{/ICNPBRequest}">
-
+            <headerToolbar>
+              <Toolbar >
+                <Title text="ICNPB Requests({view>/totalCount})"></Title>
+                <ToolbarSpacer ></ToolbarSpacer>
+                <SearchField   width="60%"  search=".onSearch"/>
+              </Toolbar>
+            </headerToolbar>
             <columns>
-
                 <Column width="12em">
                     <Text text="Request"/>
                 </Column>
@@ -142,9 +135,7 @@
                 <Column width="10em">
                     <Text text="AP Document"/>
                 </Column>
-                <Column width="10em">
-                    <Text text="Error Message"/>
-                </Column>
+               
 
                 <Column width="15em">
                     <Text text="User"/>
@@ -152,6 +143,9 @@
 
                 <Column width="10em">
                     <Text text="Amount"/>
+                </Column>
+                 <Column width="60em">
+                    <Text text="Error Message"/>
                 </Column>
 
             </columns>
@@ -162,7 +156,7 @@
 
                     <cells>
 
-                        <Text text="{requestNumber}"/>
+                        <ObjectIdentifier title="{requestNumber}" titleActive="true" titlePress="onPressReqNo"/>
 
                         <Text text="{billingType}"/>
 
@@ -191,11 +185,11 @@
                         <Text text="{ICARDocument}"/>
 
                         <Text text="{ICAPDocument}"/>
-                        <Text text="{errorMessage}"/>
+                        
                         <Text text="{userId}"/>
 
                         <Text text="{= ${totalAmountCustomer} + ' ' + ${currencyCustomer} }" />
-
+                        <Text text="{errorMessage}" wrapping="false"/>
 
 
                     </cells>

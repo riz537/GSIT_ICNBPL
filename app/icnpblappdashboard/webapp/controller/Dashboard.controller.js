@@ -3,15 +3,14 @@ sap.ui.define([
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
     "sap/ui/model/json/JSONModel",
-    "sap/m/MessageBox"
-], (Controller, Filter, FilterOperator, JSONModel, MessageBox) => {
+    "sap/m/MessageBox",
+    "com/ui5/lly/icnpbl/icnpblappdashboard/model/formatter"
+], (Controller, Filter, FilterOperator, JSONModel, MessageBox,formatter) => {
     "use strict";
 
     return Controller.extend("com.ui5.lly.icnpbl.icnpblappdashboard.controller.Dashboard", {
+        f:formatter,
         onInit() {
-
-
-
             var oModel = new sap.ui.model.json.JSONModel();
 
             this.getView().setModel(oModel, "dashboard");
@@ -20,21 +19,16 @@ sap.ui.define([
 
             const oContext = oModel1.bindContext("/getCounts()");
 
-
             oContext.requestObject().then((oData) => {
                 oModel.setData(oData);
             }).catch((oError) => {
                 console.error("error");
             });
 
-
             this.viewModel = new JSONModel();
             this.getView().setModel(this.viewModel, "viewModel");
             this.requestModel = new JSONModel();
             this.getView().setModel(this.requestModel, "requestModel");
-
-
-
 
             const oViewModel = new sap.ui.model.json.JSONModel({
                 totalCount: 0
@@ -55,9 +49,19 @@ sap.ui.define([
 
 
         },
-
+        onPressReqNo: function (oEvent) {
+           let title = oEvent.getSource().getTitle()+" Logs";
+           let oContext = oEvent.getSource().getParent().getBindingContext();
+            if(!this.historyDialog){
+                this.historyDialog = sap.ui.xmlfragment(this.getView().getId(),"com.ui5.lly.icnpbl.icnpblappdashboard.fragments.history",this);
+                this.getView().addDependent(this.historyDialog );
+            }
+            this.historyDialog.openBy(oEvent.getSource());
+            this.historyDialog.setTitle(title);
+            this.historyDialog.setBindingContext(oContext);
+        },
+       
         onAfterRendering: function () {
-
             // this.byId("submittedCard").$()
             //     .css("cursor", "pointer")
             //     .on("click", () => this._filterByStatus("SUBMITTED"));

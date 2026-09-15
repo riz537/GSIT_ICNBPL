@@ -55,6 +55,14 @@ service IcNpblService {
                            ICAPDocument: String,
                            errorMessage: String)              returns String;
 
+    //==========================================================================================
+    // Generic Update Action to save into approval History table. BPA can call this at any stage
+    //==========================================================================================
+    action   addApprovalHistory(requestId: UUID,
+                                action: String,
+                                actor: String,
+                                actorRole: String,
+                                comments: String)             returns String;
     //====================================================
     // SAP Integration Actions
     //====================================================
@@ -63,6 +71,8 @@ service IcNpblService {
     action   getSalesOrder(requestId: UUID, poNumber: String) returns db.SalesOrderResponse;
     action   syncICARICAPDocs()                               returns String;
     action   createFinanceDocument(requestId: UUID)           returns String;
+    action   createICARDocument(requestId: UUID)              returns String;
+    action   createICAPDocument(requestId: UUID, ICARDocument: String) returns String;
 
     //====================================================
     // Email Actions
