@@ -51,6 +51,7 @@ service IcNpblService {
                            poNumber: String,
                            soNumber: String,
                            fiNumber: String,
+                           billingReqNumber: String,
                            ICARDocument: String,
                            ICAPDocument: String,
                            errorMessage: String)              returns String;
@@ -67,12 +68,14 @@ service IcNpblService {
     // SAP Integration Actions
     //====================================================
 
-    action   createPurchaseOrder(requestId: UUID)             returns String;
+    action   createPurchaseOrder(requestId: UUID)             returns db.ActionResponse;
     action   getSalesOrder(requestId: UUID, poNumber: String) returns db.SalesOrderResponse;
     action   syncICARICAPDocs()                               returns String;
-    action   createFinanceDocument(requestId: UUID)           returns String;
-    action   createICARDocument(requestId: UUID)              returns String;
-    action   createICAPDocument(requestId: UUID, ICARDocument: String) returns String;
+    action   createFinanceDocument(requestId: UUID)           returns db.ActionResponse;
+    action   createBillingRequest(requestId: UUID,salesOrderNumber : String,salesOrderItem:String,postingDate: String) returns db.ActionResponse;
+
+    action   createICARDocument(requestId: UUID)              returns db.ActionResponse;
+    action   createICAPDocument(requestId: UUID, ICARDocument: String) returns db.ActionResponse;
 
     //====================================================
     // Email Actions
@@ -80,8 +83,9 @@ service IcNpblService {
 
     action   sendSubmitterEmail(requestId: UUID)              returns String;
     action   sendApproverEmail(requestId: UUID)               returns String;
-    action   sendApprovalEmail(requestId: UUID)               returns String;
-    action   sendRejectionEmail(requestId: UUID)              returns String;
+    action   sendApprovalEmail(requestId: UUID,approvalComments : String)               returns String;
+    action   sendRejectionEmail(requestId: UUID,rejectionComments : String)              returns String;
     action   sendPOEmail(requestId: UUID, poNumber: String)   returns String;
+    action   sendAdminFailureEmail(requestId: UUID,failedStep:String,errorMessage:String) returns String;
 
 }

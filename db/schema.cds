@@ -91,9 +91,16 @@ type SAPEnablementStatus     : String enum {
     NON;
 }
 type SalesOrderResponse {
+    status           : String;
     salesOrderNumber : String;
     ICARDocument     : String;
     ICAPDocument     : String;
+    errorMessage     : String;
+}
+type ActionResponse {
+    status       : String;
+    value        : String;
+    errorMessage : String;
 }
 
 /* =========================
@@ -173,6 +180,7 @@ entity ICNPBRequest : cuid, managed {
     salesOrderNumber              : String(10);
 
     fiJournalVoucherNumber        : String(10);
+    billingReqNumber              : String(10);
     ICARDocument                  : String(10);
     ICAPDocument                    : String(10);
     fiFiscalYear                  : String(4);

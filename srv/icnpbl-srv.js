@@ -11,10 +11,11 @@ module.exports = class IcNpblService extends cds.ApplicationService {
     const emailSrv = await cds.connect.to("email_iflow");
     const trackingSrv = await cds.connect.to("ZI_PO_DOC_TRACKING_edmx");
     const financeSrv = await cds.connect.to("FI_API_edmx");
+    const billingRequestSrv = await cds.connect.to("DP91_API_edmx");
 
     this.on('READ', [ICCustomer, ICVendor, CostCenter], async req => {
       console.log("Inside READ --> req.query below");
-      console.log(JSON.stringify(req.query, null, 2));
+      console.log(JSON.stringify(req.query));
       return mdSrv.run(req.query);
     });
     this.on('getExchangeRate', async req => {
@@ -62,7 +63,8 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       const protocol = req.headers['x-forwarded-proto'] || 'https';
       const host = req.headers['x-forwarded-host'] || req.headers.host;
       const origin = `${protocol}://${host}`;
-      req.data.uploadUrl = origin + "/GSIT_ICNPBLservice.comui5llyicnpblicnpblapp/odata/v4/ic-npbl/ICNPBAttachment(" + req.data.ID + ")/fileContent";
+      //req.data.uploadUrl = origin + "/GSIT_ICNPBLservice.comui5llyicnpblicnpblapp/odata/v4/ic-npbl/ICNPBAttachment(" + req.data.ID + ")/fileContent";
+      req.data.uploadUrl =  req.data.uploadUrl+"ICNPBAttachment(" + req.data.ID + ")/fileContent";
     });
 
     this.on('getBillingSubTypes', async (req) => {
@@ -144,7 +146,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       const requestAmount = Number(request.totalAmountLocal || 0);
 
 
-      if (requestAmount <= threshold) {
+      if (requestAmount < threshold) {
         req.reject(
           400,
           `IC NPB Billing request amount can not be less than the threshold amount - ${threshold}.`
@@ -247,8 +249,8 @@ module.exports = class IcNpblService extends cds.ApplicationService {
           path: `/workflow/rest/v1/workflow-instances/${workflowInstanceIdIP}/execution-logs`
         });
         console.log("=== BPA Response start ===");
-        console.log("BPA Response = status", JSON.stringify(workFlowRes, null, 2));
-        console.log("BPA Response = executionlog", JSON.stringify(executionlog, null, 2));
+        console.log("BPA Response = status", JSON.stringify(workFlowRes));
+        console.log("BPA Response = executionlog", JSON.stringify(executionlog));
         console.log("=== BPA Response end ===");
         // await UPDATE(newtabletostorebpadetails)
         return "Success";
@@ -263,12 +265,13 @@ module.exports = class IcNpblService extends cds.ApplicationService {
     });
 
     this.on("updateRequest", async req => {
-      const { requestId, status, poNumber, soNumber, fiNumber, ICARDocument, ICAPDocument, errorMessage } = req.data;
+      const { requestId, status, poNumber, soNumber, fiNumber,billingReqNumber, ICARDocument, ICAPDocument, errorMessage } = req.data;
       const payload = {};
       if (status) payload.status = status;
       if (poNumber) payload.purchaseOrderNumber = poNumber;
       if (soNumber) payload.salesOrderNumber = soNumber;
       if (fiNumber) payload.fiJournalVoucherNumber = fiNumber;
+      if (billingReqNumber) payload.billingReqNumber = billingReqNumber;
       if (ICARDocument) payload.ICARDocument = ICARDocument;
       if (ICAPDocument) payload.ICAPDocument = ICAPDocument;
       if (status && status !== "ERROR") payload.errorMessage = null;
@@ -371,10 +374,18 @@ module.exports = class IcNpblService extends cds.ApplicationService {
 
         const poNumber = result.PurchaseOrder;
         if (!poNumber) throw new Error("Purchase Order was not returned from S4");
-        return poNumber;
+        return {
+          status: "SUCCESS",
+          value: poNumber,
+          errorMessage: ""
+        };
       } catch (error) {
-        await saveErrorMessage(requestId, error);
-        return "ERROR";
+        const errorMessage = await saveErrorMessage(requestId, error);
+        return {
+          status: "ERROR",
+          value: "",
+          errorMessage: errorMessage
+        }
       }
 
     });
@@ -444,16 +455,20 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         const soAPIRes = soResult?.[0];
         if (!soAPIRes) throw new Error("Sales Order Number was not returned from S4");
         return {
+          status: "SUCCESS",
           salesOrderNumber: soAPIRes.SalesOrder,
           ICARDocument: soAPIRes.ICARDocument,
-          ICAPDocument: soAPIRes.ICAPDocument
+          ICAPDocument: soAPIRes.ICAPDocument,
+          errorMessage: ""
         };
       } catch (error) {
-        await saveErrorMessage(requestId, error);
+        const errorMessage = await saveErrorMessage(requestId, error);
         return {
+          status: "ERROR",
           salesOrderNumber: "",
           ICARDocument: "",
-          ICAPDocument: ""
+          ICAPDocument: "",
+          errorMessage: errorMessage
         };
       }
     });
@@ -520,16 +535,55 @@ module.exports = class IcNpblService extends cds.ApplicationService {
           data: payload
         });
         console.log("FI Response --->");
-        console.log(JSON.stringify(result, null, 2));
+        console.log(JSON.stringify(result));
 
         const fiNumber = result?.DocId;
         if (!fiNumber) throw new Error("FI Number was not returned from S4");
-        return fiNumber;
+        return {
+          status: "SUCCESS",
+          value: fiNumber,
+          errorMessage: ""
+        }
       } catch (error) {
-        await saveErrorMessage(requestId, error);
-        return "ERROR";
+        const errorMessage = await saveErrorMessage(requestId, error);
+        return {
+          status: "ERROR",
+          value: "",
+          errorMessage: errorMessage
+        }
       }
     });
+
+    this.on("createBillingRequest", async req => {
+      const {requestId, salesOrderNumber, salesOrderItem, postingDate } = req.data;
+      const postingDateTime = postingDate + "T00:00:00";
+      const path = `/CreateBillingRequest?SalesOrderNumber='${salesOrderNumber}'&SalesOrderItem='${salesOrderItem}'&PostingDate=datetime'${postingDateTime}'`;
+      console.log("Billing Request Path -->");
+      console.log(path);
+      try {
+        const result = await billingRequestSrv.send({
+          method: "POST",
+          path: path
+        });
+        console.log("Billing Request Response -->");
+        console.log(JSON.stringify(result));
+        const billingRequestNumber = result?.BillingRequestNumber;
+        if (!billingRequestNumber) throw new Error("BillingRequestNumber was not returned from S4");
+        return {
+          status: "SUCCESS",
+          value: billingRequestNumber,
+          errorMessage: ""
+        }
+      } catch (error) {
+         const errorMessage = await saveErrorMessage(requestId, error);
+        return {
+          status: "ERROR",
+          value: "",
+          errorMessage: errorMessage
+        }
+      }
+    });
+
     this.on("createICARDocument", async req => {
       const { requestId } = req.data;
       const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
@@ -544,7 +598,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       const sapDate = `${yyyy}${mm}${dd}`;
       const payload = {
         Username: "ICOUSER",
-        HeaderTxt: request.requestNumber,
+        HeaderTxt: request.requestNumber.split("-")[2],
         CompCode: request.billingAffiliateCompanyCode,
         DocDate: sapDate,
         PstngDate: sapDate,
@@ -552,7 +606,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         FiscYear: yyyy,
         FisPeriod: mm,
         DocType: "ZR",
-        RefDocNo: request.requestNumber,
+        RefDocNo: request.requestNumber.split("-")[2],
         ToAccountGL: [{
           ItemnoAcc: "0000000001",
           GlAccount: leftPad(request.billingAffiliateCostElement, 10),
@@ -579,7 +633,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         }]
       };
       console.log("ICAR Payload -->");
-      console.log(JSON.stringify(payload, null, 2));
+      console.log(JSON.stringify(payload));
       try {
         const result = await financeSrv.send({
           method: "POST",
@@ -590,19 +644,27 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         console.log(JSON.stringify(result));
         const ICARDocument = result?.DocId;
         if (!ICARDocument) throw new Error("ICAR Document Number not returned");
-        return ICARDocument;
+        return {
+          status: "SUCCESS",
+          value: ICARDocument,
+          errorMessage: ""
+        }
       } catch (error) {
-        await saveErrorMessage(requestId, error);
-        return "ERROR";
+        const errorMessage = await saveErrorMessage(requestId, error);
+        return {
+          status: "ERROR",
+          value: "",
+          errorMessage: errorMessage
+        }
       }
     });
     this.on("createICAPDocument", async req => {
-      const {requestId,ICARDocument} = req.data;
+      const { requestId, ICARDocument } = req.data;
       const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
       if (!request) {
         return "ERROR";
       }
-      const billingAffiliate = await SELECT.one.from(AffiliateMaster).where({companyCode: request.billingAffiliateCompanyCode});
+      const billingAffiliate = await SELECT.one.from(AffiliateMaster).where({ companyCode: request.billingAffiliateCompanyCode });
       const billDate = new Date(request.billAtDate);
       const yyyy = billDate.getFullYear().toString();
       const mm = String(billDate.getMonth() + 1).padStart(2, "0");
@@ -610,7 +672,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       const sapDate = `${yyyy}${mm}${dd}`;
       const payload = {
         Username: "ICOUSER",
-        HeaderTxt: request.requestNumber,
+        HeaderTxt: request.requestNumber.split("-")[2],
         CompCode: request.receivingAffiliateCompanyCode,
         DocDate: sapDate,
         PstngDate: sapDate,
@@ -621,10 +683,10 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         RefDocNo: ICARDocument,
         ToAccountGL: [{
           ItemnoAcc: "0000000001",
-          GlAccount: leftPad(request.receivingAffiliateCostElement,10),
+          GlAccount: leftPad(request.receivingAffiliateCostElement, 10),
           ItemText: request.billingDescription,
           BusArea: "A",
-          CostCenter: leftPad(request.receivingAffiliateCostCenter, 10 )
+          CostCenter: leftPad(request.receivingAffiliateCostCenter, 10)
         }],
         ToAccountPayable: [{
           ItemnoAcc: "0000000002",
@@ -634,13 +696,13 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         }],
         ToCurrencyAmount: [{
           ItemnoAcc: "0000000001",
-          Currency:request.currencyCustomer,
-          AmtDoccur: Number( request.totalAmountCustomer).toFixed(3)
+          Currency: request.currencyCustomer,
+          AmtDoccur: Number(request.totalAmountCustomer).toFixed(3)
         },
         {
           ItemnoAcc: "0000000002",
           Currency: request.currencyCustomer,
-          AmtDoccur:(Number(request.totalAmountCustomer) * -1).toFixed(3)
+          AmtDoccur: (Number(request.totalAmountCustomer) * -1).toFixed(3)
         }]
       };
       console.log("ICAP Payload -->");
@@ -654,11 +716,19 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         console.log("ICAP Response");
         console.log(JSON.stringify(result));
         const ICAPDocument = result?.DocId;
-        if (!ICAPDocument)  throw new Error(  "ICAP Document Number not returned" );
-        return ICAPDocument;
+        if (!ICAPDocument) throw new Error("ICAP Document Number not returned");
+        return {
+          status: "SUCCESS",
+          value: ICAPDocument,
+          errorMessage: ""
+        }
       } catch (error) {
-        await saveErrorMessage( requestId, error);
-        return "ERROR";
+        const errorMessage = await saveErrorMessage(requestId, error);
+        return {
+          status: "ERROR",
+          value: "",
+          errorMessage: errorMessage
+        }
       }
     });
 
@@ -709,7 +779,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       }
     });
     this.on("sendApprovalEmail", async req => {
-      const { requestId } = req.data;
+      const { requestId,approvalComments } = req.data;
       const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
       if (!request) return "ERROR";
       const { submitterName } = await getUserNames(request);
@@ -717,7 +787,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         await sendEmail(
           request.createdBy,
           `ICNPB Request-${request.requestNumber} Approved`,
-          buildApprovalEmail(request, submitterName)
+          buildApprovalEmail(request, submitterName,approvalComments)
         );
         return "SUCCESS";
       } catch (error) {
@@ -726,7 +796,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       }
     });
     this.on("sendRejectionEmail", async req => {
-      const { requestId } = req.data;
+      const { requestId,rejectionComments } = req.data;
       const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
       if (!request) return "ERROR";
       const { submitterName } = await getUserNames(request);
@@ -734,7 +804,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         await sendEmail(
           request.createdBy,
           `ICNPB Request-${request.requestNumber} Rejected`,
-          buildRejectionEmail(request, submitterName)
+          buildRejectionEmail(request, submitterName,rejectionComments)
         );
         return "SUCCESS";
       } catch (error) {
@@ -759,6 +829,30 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         return "ERROR";
       }
     });
+
+    this.on("sendAdminFailureEmail", async req => {
+      const { requestId, failedStep, errorMessage } = req.data;
+      const request = await SELECT.one.from(ICNPBRequest).where({ ID: requestId });
+      if (!request) return "ERROR";
+      const inboxUrl = "https://lly-sbx.launchpad.cfapps.us10.hana.ondemand.com/site/demo#WorkflowTask-DisplayMyInbox";
+      try {
+        await sendEmail(
+          request.receivingAffiliateContact, // replace with actual admin DL
+          `${request.requestNumber} FAILED. Remarks: ${failedStep}`,
+          buildAdminFailureEmail(request, failedStep, errorMessage,inboxUrl)
+        );
+        return "SUCCESS";
+      } catch (error) {
+        console.error(error);
+        return "ERROR";
+      }
+    });
+
+
+
+
+
+    //Helper functions
     const leftPad = (value, length) => String(value).padStart(length, "0");
     //reusable function to trigger email
     const sendEmail = async (to, subject, body) => {
@@ -770,7 +864,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
       }];
 
       console.log("Email Payload --->");
-      console.log(JSON.stringify(payload, null, 2));
+      console.log(JSON.stringify(payload));
 
       const response = await emailSrv.send({
         method: "POST",
@@ -853,7 +947,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
               </p>
               `;
     };
-    function buildApprovalEmail(request, submitterName) {
+    function buildApprovalEmail(request, submitterName,approvalComments) {
       return `
             <p>Hi ${submitterName},</p>
 
@@ -863,7 +957,8 @@ module.exports = class IcNpblService extends cds.ApplicationService {
 
             <p>
             <b>Request Number:</b> ${request.requestNumber}<br>
-            <b>Status:</b> Approved
+            <b>Status:</b> Approved <br>
+            <b>Comments:</b> ${approvalComments || "No comments provided"}
             </p>
             
             <p>
@@ -872,7 +967,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
             </p>
             `;
     };
-    function buildRejectionEmail(request, submitterName) {
+    function buildRejectionEmail(request, submitterName,rejectionComments) {
       return `
           <p>Hi ${submitterName},</p>
 
@@ -882,7 +977,8 @@ module.exports = class IcNpblService extends cds.ApplicationService {
 
           <p>
           <b>Request Number:</b> ${request.requestNumber}<br>
-          <b>Status:</b> Rejected
+          <b>Status:</b> Rejected <br>
+          <b>Comments:</b> ${rejectionComments || "No comments provided"}
           </p>
 
           <p>
@@ -900,7 +996,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         <p>Hi ${submitterName},</p>
 
         <p>
-        The following has been created successfully for your ICNPB request.
+        Below are the details of your ICNPB request.
         </p>
 
         <p>
@@ -908,6 +1004,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         <b>Purchase Order:</b> ${poNumber}<br>
         <b>Sales Order:</b> ${request.salesOrderNumber}<br>
         <b>FI Journal Voucher Number:</b> ${request.fiJournalVoucherNumber}<br>
+        <b>Billing Request Number</b> ${request.billingReqNumber}<br>
         <b>ICAR Number:</b> ${request.ICARDocument}<br>
         <b>ICAP Number:</b> ${request.ICAPDocument}<br>
         <b>Amount:</b> ${request.totalAmountCustomer} ${request.currencyCustomer}
@@ -919,6 +1016,42 @@ module.exports = class IcNpblService extends cds.ApplicationService {
         </p>
     `;
     };
+    function buildAdminFailureEmail(request, failedStep, errorMessage,inboxUrl) {
+      return `
+      <p>Hello Team,</p>
+
+      <p>
+      An error occurred while processing an ICNPB request.
+      </p>
+
+      <p>
+      <b>Request Number:</b> ${request.requestNumber}<br>
+      <b>Failed Step:</b> ${failedStep}<br>
+      <b>Billing Affiliate:</b> ${request.billingAffiliateCompanyCode}<br>
+      <b>Receiving Affiliate:</b> ${request.receivingAffiliateCompanyCode}<br>
+      <b>Billing Description:</b> ${request.billingDescription}<br>
+      <b>Amount:</b> ${request.totalAmountCustomer} ${request.currencyCustomer}
+      </p>
+      <p>
+      <b>Error Details:</b><br>
+      ${errorMessage}
+      
+      </p>
+
+    <p>
+      Please review and correct the issue in SAP.
+      The BPA workflow is currently waiting for reprocessing.
+      Once the issue is resolve please submit the resolution form using below MyInbox link
+      </p>
+      <p>
+            <a href="${inboxUrl}"> Open My Inbox</a>
+      </p>
+      <p>
+      Thanks,<br>
+      ICNPB Support Team
+    </p>
+    `;
+    }
     // const getTaskId = async (workflowInstanceId) => {
     //   try {
     //     console.log("workflowInstanceId--->" + workflowInstanceId);
@@ -985,7 +1118,7 @@ module.exports = class IcNpblService extends cds.ApplicationService {
 
             if (task) {
               console.log("Task found:");
-              console.log(JSON.stringify(task, null, 2));
+              console.log(JSON.stringify(task));
 
               return task.id;
             }

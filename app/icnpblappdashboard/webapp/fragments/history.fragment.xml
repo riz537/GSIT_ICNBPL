@@ -1,15 +1,9 @@
 <core:FragmentDefinition xmlns="sap.m"
 	xmlns:c="sap.suite.ui.commons"
 	xmlns:core="sap.ui.core">
-	<Popover title="Sample popover" contentHeight="90%" contentWidth="33%">
+	<Popover title="Sample popover" contentHeight="90%" contentWidth="38%">
 		<List busyIndicatorDelay="0" items="{path:'approvalHistory',sorter:{path:'timestamp',descending:true}}" class="sapUiTinyMargin" width="auto">
 			<StandardListItem title="{actor} on {timestamp}" description="{comments}" icon="{path:'action',formatter:'.f.formatIcon'}" iconInset="false"  info="{action}" infoState="{path:'action',formatter:'.f.formatColor'}" infoStateInverted="true" />
-			<!-- <FeedListItem sender="{actor}" text="{action}" info="{comments}" timestamp="{timestamp}" iconSize="S" icon="{path:'action',formatter:'.f.formatIcon'}" /> -->
 		</List>
-		<!-- <c:Timeline id="idTimeline" enableDoubleSided="true" enableModelFilter="false" showSearch="false" showSort="false" showHeaderBar="false" content="{approvalHistory}">
-		<c:content> <c:TimelineItem dateTime="{timestamp}" title="{action}" text="{comments}" userName="{actor}" icon="{path:'action',formatter:'.f.formatIcon'}" iconSize="XL" status="{path:'action',formatter:'.f.formatIconColor'}">
-			</c:TimelineItem>
-		</c:content>
-	</c:Timeline> -->
 	</Popover>
 </core:FragmentDefinition>

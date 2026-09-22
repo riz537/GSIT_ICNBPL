@@ -90,6 +90,16 @@
           "destination": "S4HANA-ICNPB-POC",
           "path": "/sap/opu/odata/sap/ZFI_ACC_POST_SRV_SRV"
         }
+      },
+      "DP91_API_edmx": {
+        "kind": "odata-v2",
+        "model": "srv/external/DP91_API.edmx",
+        "csrf": true,
+        "csrfInBatch": true,
+        "credentials": {
+          "destination": "S4HANA-ICNPB-POC",
+          "path": "/sap/opu/odata/sap/ZSB_DP91_BILL_SRV"
+        }
       }
     }
   }

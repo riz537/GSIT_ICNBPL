@@ -6,7 +6,7 @@ sap.ui.define([
     "use strict";
 
     return Controller.extend("com.ui5.lly.icnpbl.icnpblapp.controller.IcNpblReq", {
-        onInit() {
+        onInit:async function() {
             this.billingTypes = {
                 "FINANCIAL": "Financial",
                 "COST_CENTER": "Cost Center",
@@ -17,6 +17,14 @@ sap.ui.define([
             this.requestModel = new JSONModel();
             this.requestModel.setProperty("/markupPercent", 0);
             this.getView().setModel(this.requestModel, "requestModel");
+           let emailID = await this.getLoggedinUserInfo();
+           console.log("logged user ID --->"+emailID);
+           this.byId("oIpBillContact").setValue(emailID);
+        },
+        getLoggedinUserInfo:async function () {
+            const oUserInfo = await sap.ushell.Container.getServiceAsync("UserInfo");
+            const sEmail = oUserInfo.getUser().getEmail();
+            return sEmail;
         },
         onSelBilTiming: function (oEvent) {
             var bilTiming = oEvent.getParameter("selectedIndex");
@@ -417,14 +425,16 @@ sap.ui.define([
                 return;
             }
             const file = this._selectedFile;
+            const oModel = this.getView().getModel();
             //const base64Content = await this._readFileAsBase64(file);
             const payload = {
                 request_ID: requestId,
                 fileName: file.name,
                 mimeType: file.type,
                 uploadedAt: new Date().toISOString(),
+                uploadUrl: window.location.origin + oModel.getServiceUrl().replace("../", "/")
             };
-            const oModel = this.getView().getModel();
+
             try {
                 const oBinding = oModel.bindList("/ICNPBAttachment");
                 const oContext = oBinding.create(payload);
@@ -440,17 +450,21 @@ sap.ui.define([
         _uploadFileContent: function (attachmentId) {
             const oModel = this.getView().getModel();
             console.log("attachmentId -->" + attachmentId);
-            console.log("service URL --->" + oModel.getServiceUrl());
             var oFileUploader = this.byId("oFileUploader");
             oFileUploader.removeAllHeaderParameters();
-            const token =this.getView().getModel().getHttpHeaders()["X-CSRF-Token"];
+            const token = this.getView().getModel().getHttpHeaders()["X-CSRF-Token"];
             oFileUploader.addHeaderParameter(
                 new sap.ui.unified.FileUploaderParameter({
                     name: "X-CSRF-Token",
                     value: token
                 })
             );
-            oFileUploader.setUploadUrl("/GSIT_ICNPBLservice.comui5llyicnpblicnpblapp/odata/v4/ic-npbl/ICNPBAttachment(" + attachmentId + ")/fileContent");
+
+            let uploadUrl = oModel.getServiceUrl() + "ICNPBAttachment(" + attachmentId + ")/fileContent";
+            //oFileUploader.setUploadUrl("/GSIT_ICNPBLservice.comui5llyicnpblicnpblapp/odata/v4/ic-npbl/ICNPBAttachment(" + attachmentId + ")/fileContent");
+            oFileUploader.setUploadUrl(uploadUrl);
+            console.log("serviceURL ---->" + oModel.getServiceUrl());
+            console.log("uploadUrl----->" + uploadUrl);
             oFileUploader.upload();
         },
         saveRequest: async function () {
@@ -528,6 +542,7 @@ sap.ui.define([
             this.byId("oRBGBillTiming").setSelectedIndex(-1);
             this.byId("oChBSpclInstr").setSelected(false);
             this.byId("oTAComments").setValue("");
+            this.byId("oFileUploader").setValue(null);
             this.requestModel.refresh(true);
         }
 

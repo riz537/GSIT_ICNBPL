@@ -1,0 +1,140 @@
+{
+ "meta": {
+  "creator": "cds-dk 10.0.7"
+ },
+ "$version": "2.0",
+ "definitions": {
+  "DP91_API_edmx": {
+   "kind": "service",
+   "@cds.external": true,
+   "@m.IsDefaultEntityContainer": "true",
+   "@sap.supported.formats": "atom json xlsx"
+  },
+  "DP91_API_edmx.BillingRequestHeaderSet": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "@sap.creatable": "false",
+   "@sap.updatable": "false",
+   "@sap.deletable": "false",
+   "@sap.pageable": "false",
+   "@sap.addressable": "false",
+   "@sap.content.version": "1",
+   "elements": {
+    "RequestUUID": {
+     "key": true,
+     "type": "cds.String",
+     "@sap.unicode": "false",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "SalesOrderNumber": {
+     "type": "cds.String",
+     "@sap.unicode": "false",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "PostingDate": {
+     "type": "cds.DateTime",
+     "@odata.Type": "Edm.DateTime",
+     "@sap.unicode": "false",
+     "@sap.label": "Time Stamp",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "BillingRequestNumber": {
+     "type": "cds.String",
+     "@sap.unicode": "false",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "ToItems": {
+     "type": "cds.Association",
+     "target": "DP91_API_edmx.BillingRequestItemSet",
+     "cardinality": {
+      "max": "*"
+     },
+     "keys": []
+    }
+   }
+  },
+  "DP91_API_edmx.BillingRequestItemSet": {
+   "kind": "entity",
+   "@cds.external": true,
+   "@cds.persistence.skip": true,
+   "@sap.creatable": "false",
+   "@sap.updatable": "false",
+   "@sap.deletable": "false",
+   "@sap.pageable": "false",
+   "@sap.addressable": "false",
+   "@sap.content.version": "1",
+   "elements": {
+    "RequestUUID": {
+     "key": true,
+     "type": "cds.String",
+     "@sap.unicode": "false",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "ItemNumber": {
+     "key": true,
+     "type": "cds.String",
+     "@sap.unicode": "false",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    },
+    "Quantity": {
+     "type": "cds.Decimal",
+     "precision": 31,
+     "scale": 0,
+     "@sap.unicode": "false",
+     "@sap.creatable": "false",
+     "@sap.updatable": "false",
+     "@sap.sortable": "false",
+     "@sap.filterable": "false",
+     "notNull": true
+    }
+   }
+  },
+  "DP91_API_edmx.CreateBillingRequest": {
+   "kind": "action",
+   "@cds.external": true,
+   "params": {
+    "SalesOrderNumber": {
+     "type": "cds.String",
+     "length": 10
+    },
+    "SalesOrderItem": {
+     "type": "cds.String",
+     "length": 6
+    },
+    "PostingDate": {
+     "type": "cds.DateTime",
+     "@odata.Type": "Edm.DateTime",
+     "@sap.label": "Time Stamp"
+    }
+   },
+   "returns": {
+    "type": "DP91_API_edmx.BillingRequestHeaderSet"
+   }
+  }
+ }
+}

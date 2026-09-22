@@ -5,39 +5,20 @@ sap.ui.define([
     "sap/ui/model/json/JSONModel",
     "sap/m/MessageBox",
     "com/ui5/lly/icnpbl/icnpblappdashboard/model/formatter"
-], (Controller, Filter, FilterOperator, JSONModel, MessageBox,formatter) => {
+], (Controller, Filter, FilterOperator, JSONModel, MessageBox, formatter) => {
     "use strict";
 
     return Controller.extend("com.ui5.lly.icnpbl.icnpblappdashboard.controller.Dashboard", {
-        f:formatter,
+        f: formatter,
         onInit() {
-            var oModel = new sap.ui.model.json.JSONModel();
-
-            this.getView().setModel(oModel, "dashboard");
-
-            const oModel1 = this.getOwnerComponent().getModel();
-
-            const oContext = oModel1.bindContext("/getCounts()");
-
-            oContext.requestObject().then((oData) => {
-                oModel.setData(oData);
-            }).catch((oError) => {
-                console.error("error");
-            });
-
-            this.viewModel = new JSONModel();
-            this.getView().setModel(this.viewModel, "viewModel");
-            this.requestModel = new JSONModel();
-            this.getView().setModel(this.requestModel, "requestModel");
-
+            this.dashboardModel = new sap.ui.model.json.JSONModel();
+            this.getView().setModel(this.dashboardModel, "dashboard");
+            this.loadTileCount();
             const oViewModel = new sap.ui.model.json.JSONModel({
                 totalCount: 0
             });
-
             this.getView().setModel(oViewModel, "view");
-
             const oTable = this.byId("requestTable");
-
             oTable.attachUpdateFinished((oEvent) => {
                 this.getView()
                     .getModel("view")
@@ -46,21 +27,41 @@ sap.ui.define([
                         oEvent.getParameter("total")
                     );
             });
-
-
+        },
+        loadTileCount:async function () {
+            const oModel = this.getOwnerComponent().getModel();
+            const oContext = oModel.bindContext("/getCounts()");
+            try {
+                const oData = await oContext.requestObject();
+                this.dashboardModel.setData(oData);
+                this.dashboardModel.refresh(true);
+            } catch (oError) {
+                console.error(oError);
+            }
+        },
+        // onRefresh: function () {
+        //     window.location.reload();
+        // },
+        onRefresh:async function () {
+            sap.ui.core.BusyIndicator.show(0);
+            this.byId("requestTable").getBinding("items").refresh();
+            await this.loadTileCount();
+            sap.ui.core.BusyIndicator.hide();
+            sap.m.MessageToast.show("Data refreshed");
         },
         onPressReqNo: function (oEvent) {
-           let title = oEvent.getSource().getTitle()+" Logs";
-           let oContext = oEvent.getSource().getParent().getBindingContext();
-            if(!this.historyDialog){
-                this.historyDialog = sap.ui.xmlfragment(this.getView().getId(),"com.ui5.lly.icnpbl.icnpblappdashboard.fragments.history",this);
-                this.getView().addDependent(this.historyDialog );
+            let title = oEvent.getSource().getTitle() + " Logs";
+            let oContext = oEvent.getSource().getParent().getBindingContext();
+            if (!this.historyDialog) {
+                this.historyDialog = sap.ui.xmlfragment(this.getView().getId(), "com.ui5.lly.icnpbl.icnpblappdashboard.fragments.history", this);
+                this.getView().addDependent(this.historyDialog);
             }
             this.historyDialog.openBy(oEvent.getSource());
             this.historyDialog.setTitle(title);
             this.historyDialog.setBindingContext(oContext);
+            this.historyDialog.getContent()[0].getBinding("items").refresh();
         },
-       
+
         onAfterRendering: function () {
             // this.byId("submittedCard").$()
             //     .css("cursor", "pointer")
@@ -97,9 +98,7 @@ sap.ui.define([
         },
 
         _filterByStatus: function (sStatus) {
-
             const oBinding = this.byId("requestTable").getBinding("items");
-
             if (sStatus === "TOTAL") {
                 oBinding.filter([]);
                 return;

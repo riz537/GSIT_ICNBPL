@@ -73,14 +73,15 @@
 
         <!-- Request Table -->
       <ScrollContainer horizontal="true" vertical="true" width="100%" height="70%">
-        <Table sticky="ColumnHeaders"
+        <Table sticky="ColumnHeaders,HeaderToolbar"
             id="requestTable"
             class="highlightTable"
-            items="{/ICNPBRequest}">
+            items="{path:'/ICNPBRequest',sorter:{path:'createdAt',descending:true}}">
             <headerToolbar>
               <Toolbar >
                 <Title text="ICNPB Requests({view>/totalCount})"></Title>
                 <ToolbarSpacer ></ToolbarSpacer>
+                <Button icon="sap-icon://synchronize"  press="onRefresh"/>
                 <SearchField   width="60%"  search=".onSearch"/>
               </Toolbar>
             </headerToolbar>
@@ -126,6 +127,9 @@
                 </Column>
                 <Column width="10em">
                     <Text text="Voucher Number"/>
+                </Column>
+                 <Column width="10em">
+                    <Text text="Billing Request"/>
                 </Column>
 
                 <Column width="10em">
@@ -181,6 +185,7 @@
                         
 
                         <Text text="{fiJournalVoucherNumber}"/>
+                        <Text text="{billingReqNumber}"/>
 
                         <Text text="{ICARDocument}"/>
 
