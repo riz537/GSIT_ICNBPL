@@ -51,16 +51,18 @@ modules:
   build-parameters:
     build-result: app/
     requires:
-      - name: GSIT_ICNPBLicnpblapp
-        artifacts:
-          - comui5llyicnpblicnpblapp.zip
-        target-path: app/
-
-      - name: GSIT_ICNPBLicnpblappdashboard
-        artifacts:
-          - comui5llyicnpblicnpblappdashboard.zip
-        target-path: app/
-    
+    - artifacts:
+      - comui5llyicnpblicnpblapp.zip
+      name: GSIT_ICNPBLicnpblapp
+      target-path: app/
+    - artifacts:
+      - comui5llyicnpblicnpblappdashboard.zip
+      name: GSIT_ICNPBLicnpblappdashboard
+      target-path: app/
+    - artifacts:
+      - comui5llyicnpblmanageusers.zip
+      name: GSIT_ICNPBLmanageusers
+      target-path: app/
 - name: GSIT_ICNPBLicnpblapp
   type: html5
   path: app/icnpblapp
@@ -81,6 +83,16 @@ modules:
     - npm install
     - npm run build:cf
     supported-platforms: []
+- name: GSIT_ICNPBLmanageusers
+  type: html5
+  path: app/manageusers
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []    
 - name: GSIT_ICNPBL-destinations
   type: com.sap.application.content
   requires:
@@ -136,7 +148,7 @@ resources:
   type: org.cloudfoundry.managed-service
   parameters:
     service: connectivity
-    service-plan: lite    
+    service-plan: lite
 - name: GSIT_ICNPBL-destination
   type: org.cloudfoundry.managed-service
   parameters:
