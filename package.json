@@ -23,7 +23,8 @@
     "undeploy": "cf undeploy GSIT_ICNPBL --delete-services --delete-service-keys --delete-service-brokers",
     "build": "rimraf resources mta_archives && mbt build --mtar archive",
     "deploy": "cf deploy mta_archives/archive.mtar --retries 1",
-    "watch-manageusers": "cds watch --open com.ui5.lly.icnpbl.manageusers/index.html?sap-ui-xx-viewCache=false --livereload false"
+    "watch-manageusers": "cds watch --open com.ui5.lly.icnpbl.manageusers/index.html?sap-ui-xx-viewCache=false --livereload false",
+    "watch-manageaffiliates": "cds watch --open com.ui5.lly.icnpb.manageaffiliates/index.html?sap-ui-xx-viewCache=false --livereload false"
   },
   "private": true,
   "workspaces": [
@@ -105,6 +106,7 @@
     }
   },
   "sapux": [
-    "app/manageusers"
+    "app/manageusers",
+    "app/manageaffiliates"
   ]
 }

@@ -63,6 +63,10 @@ modules:
       - comui5llyicnpblmanageusers.zip
       name: GSIT_ICNPBLmanageusers
       target-path: app/
+    - artifacts:
+      - comui5llyicnpbmanageaffiliates.zip
+      name: comui5llyicnpbmanageaffiliates
+      target-path: app/
 - name: GSIT_ICNPBLicnpblapp
   type: html5
   path: app/icnpblapp
@@ -86,6 +90,16 @@ modules:
 - name: GSIT_ICNPBLmanageusers
   type: html5
   path: app/manageusers
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+- name: comui5llyicnpbmanageaffiliates
+  type: html5
+  path: app/manageaffiliates
   build-parameters:
     build-result: dist
     builder: custom
